@@ -1,0 +1,37 @@
+module.exports = (sequelize, type) => {
+  return sequelize.define("answer", {
+    id: {
+      type: type.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+
+    question: {
+      type: type.TEXT,
+    },
+
+    answer: {
+      type: type.TEXT,
+    },
+
+    ans_date: {
+      type: type.DATEONLY,
+    },
+
+    id_user: {
+      type: type.INTEGER,
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
+
+    id_product: {
+      type: type.INTEGER,
+      references: {
+        model: "products",
+        key: "id",
+      },
+    },
+  });
+};
