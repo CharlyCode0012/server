@@ -1,15 +1,15 @@
 module.exports = (sequelize, type) =>{
     return sequelize.define('user', {
         id:{
-            type: type.INTEGER,
+            type: type.STRING(50),
             primaryKey: true,
-            autoIncrement: true
+            autoIncrement: false
         },
         name:{
             type: type.STRING(50),
             allowNUll: false
         },
-        date:{
+        date_B:{
             type: type.DATEONLY,
             allowNUll: false
         },
@@ -17,7 +17,7 @@ module.exports = (sequelize, type) =>{
             type: type.ENUM('admin', 'ayudante'),
             allowNUll: false
         },
-        email:{
+        e_mail:{
             type: type.TEXT('tiny'),
             allowNUll: false
         },

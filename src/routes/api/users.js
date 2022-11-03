@@ -4,6 +4,7 @@ const { User } = require("../../db/db");
 const { check, validationResult } = require("express-validator");
 const moment = require('moment');
 const jwt = require('jwt-simple');
+const { json } = require("sequelize");
 
 const createToken = (user)=>{
     const payload = {
@@ -17,8 +18,13 @@ const createToken = (user)=>{
 
 
 router.get("/", async (req, res) => {
-  const users = await User.findAll();
-  res.json(users);
+  try {
+    const users = await User.findAll();
+    return res.json(users);
+  } catch (error) {
+    return res.json({error});
+  }
+ 
 });
 
 router.get('/:userId', async (req, res) =>{
@@ -30,12 +36,16 @@ router.get('/:userId', async (req, res) =>{
 
   if(!user) return res.json({error: 'No se encontro ese usero'});
 
-  res.json(user);
+  return res.json(user);
 })
 
 router.post("/", async (req, res) => {
-  const user = await User.create(req.body);
-  res.json(user);
+  try {
+    const user = await User.create(req.body);
+    return res.json(user);   
+  } catch (error) {
+    return console.log(json({error}));
+  }
 });
 
 router.put("/:userId", async (req, res) => {
@@ -55,7 +65,7 @@ router.delete("/:userId", async (req, res) => {
     await User.destroy({
       where:{ id: userId}
     });
-    res.json({success: 'Se ha eliminado'})
+    return res.json({success: 'Se ha eliminado'})
   });
 
 
