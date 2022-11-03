@@ -2,73 +2,83 @@ const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const { User } = require("../../db/db");
 const { check, validationResult } = require("express-validator");
-const moment = require('moment');
-const jwt = require('jwt-simple');
+const moment = require("moment");
+const jwt = require("jwt-simple");
 const { json } = require("sequelize");
 
-const createToken = (user)=>{
-    const payload = {
-        userId: user.id,
-        createdAt: moment().unix(),
-        expiredAt: moment().add(5, 'minutes').unix(),
-    }
+const createToken = (user) => {
+  const payload = {
+    userId: user.id,
+    createdAt: moment().unix(),
+    expiredAt: moment().add(5, "minutes").unix(),
+  };
 
-    return jwt.encode(payload, 'secret sentence');
-}
-
+  return jwt.encode(payload, "secret sentence");
+};
 
 router.get("/", async (req, res) => {
   try {
     const users = await User.findAll();
     return res.json(users);
   } catch (error) {
-    return res.json({error});
+    return res.json({ error });
   }
- 
 });
 
-router.get('/:userId', async (req, res) =>{
-  const {userId} = req.params;
+router.get("/:userId", async (req, res) => {
+  const { userId } = req.params;
 
-  const user = await User.findAll({
-    where: {id: userId}
-  })
+  try {
+    const user = await User.findAll({
+      where: { id: userId },
+    });
 
-  if(!user) return res.json({error: 'No se encontro ese usero'});
+    if (!user) return res.json({ error: "No se encontro ese usero" });
 
-  return res.json(user);
-})
+    return res.json(user);
+    
+  } catch (error) {
+    return res.json({error});
+  }
+});
 
 router.post("/", async (req, res) => {
   try {
     const user = await User.create(req.body);
-    return res.json(user);   
+    return res.json(user);
   } catch (error) {
-    return console.log(json({error}));
+    return console.log(json({ error }));
   }
 });
 
 router.put("/:userId", async (req, res) => {
   const { userId } = req.params;
   if (!userId) return res.status(404).send("Usero no encontrado");
+  try {
+    await User.update(req.body, {
+      where: { id: userId },
+    });
 
-  await User.update(req.body, {
-    where:{ id: userId}
-  });
-  res.json({success: 'Se ha modificado'})
+    return res.json({ success: "Se ha modificado" });
+  } catch (error) {
+    return res.json({ error });
+  }
 });
 
 router.delete("/:userId", async (req, res) => {
-    const { userId } = req.params;
-    if (!userId) return res.status(404).send("Usero no encontrado");
-  
+  const { userId } = req.params;
+  if (!userId) return res.status(404).send("Usero no encontrado");
+
+  try {
     await User.destroy({
-      where:{ id: userId}
+      where: { id: userId },
     });
-    return res.json({success: 'Se ha eliminado'})
-  });
 
-
+    return res.json({ success: "Se ha eliminado" });
+  } catch (error) {
+    return res.json({ error });
+  }
+});
 
 router.post(
   "/register",
@@ -90,24 +100,21 @@ router.post(
 );
 
 router.post("/login", async (req, res) => {
-  const email = req.body.email || '';
-  const pass = req.body.pass || '';
+  const email = req.body.email || "";
+  const pass = req.body.pass || "";
   const user = await User.findOne({ where: { email: email } });
-  
+
   try {
-    if ( !user ) throw "Error en email";
+    if (!user) throw "Error en email";
 
     const equals = bcrypt.compareSync(pass, user.pass);
 
     if (!equals) throw "Error en contraseña";
 
     res.json({ success: createToken(user) });
-
   } catch (error) {
     res.json({ error });
   }
 });
-
-
 
 module.exports = router;
