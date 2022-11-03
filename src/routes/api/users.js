@@ -6,6 +6,9 @@ const moment = require("moment");
 const jwt = require("jwt-simple");
 const { json } = require("sequelize");
 
+
+
+
 const createToken = (user) => {
   const payload = {
     userId: user.id,
@@ -19,6 +22,7 @@ const createToken = (user) => {
 router.get("/", async (req, res) => {
   try {
     const users = await User.findAll();
+
     return res.json(users);
   } catch (error) {
     return res.json({ error });
@@ -34,7 +38,6 @@ router.get("/:userId", async (req, res) => {
     });
 
     if (!user) return res.json({ error: "No se encontro ese usero" });
-
     return res.json(user);
     
   } catch (error) {
@@ -53,6 +56,7 @@ router.post("/", async (req, res) => {
 
 router.put("/:userId", async (req, res) => {
   const { userId } = req.params;
+  
   if (!userId) return res.status(404).send("Usero no encontrado");
   try {
     await User.update(req.body, {
@@ -93,7 +97,6 @@ router.post(
       return res.status(422).json({ errores: errors.array() });
     }
 
-    req.body.pass = bcrypt.hashSync(req.body.pass, 10);
     const user = await User.create(req.body);
     res.json(user);
   }
@@ -102,14 +105,14 @@ router.post(
 router.post("/login", async (req, res) => {
   const email = req.body.email || "";
   const pass = req.body.pass || "";
-  const user = await User.findOne({ where: { email: email } });
-
+  
   try {
+    const user = await User.findOne({ where: { email: email } });
     if (!user) throw "Error en email";
 
-    const equals = bcrypt.compareSync(pass, user.pass);
+    const equals = user.pass;
 
-    if (!equals) throw "Error en contraseña";
+    if ( !(equals === pass) ) throw "Error en contraseña";
 
     res.json({ success: createToken(user) });
   } catch (error) {
