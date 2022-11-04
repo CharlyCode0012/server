@@ -21,7 +21,7 @@ const createToken = (user) => {
 
 router.get("/", async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.findAll({order:[["name", "ASC"]]});
 
     return res.json(users);
   } catch (error) {
