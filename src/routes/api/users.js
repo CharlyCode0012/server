@@ -29,23 +29,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:userId", async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-    const user = await User.findAll({
-      where: { id: userId },
-    });
-
-    if (!user) return res.json({ error: "No se encontro ese usero" });
-    return res.json(user);
-    
-  } catch (error) {
-    return res.json({error});
-  }
-});
-
-router.get("/:userName", async (req, res) => {
+router.get("getUserByName/:userName", async (req, res) => {
   const { userName } = req.params;
 
   try {
@@ -61,7 +45,7 @@ router.get("/:userName", async (req, res) => {
   }
 });
 
-router.get("/:userCel", async (req, res) => {
+router.get("getUserByCel/:userCel", async (req, res) => {
   const { userCel } = req.params;
 
   try {
