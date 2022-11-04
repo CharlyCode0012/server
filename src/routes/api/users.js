@@ -49,7 +49,7 @@ router.get("/getUserByCel/:userCel", async (req, res) => {
   const { userCel } = req.params;
 
   try {
-    const user = await User.findOne({
+    const user = await User.findAll({
       where: { cel: userCel },
     });
 
