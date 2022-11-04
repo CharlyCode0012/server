@@ -22,6 +22,7 @@ module.exports = (sequelize, type) =>{
                 model:'categories',
                 key: 'id'
             },
+            onDelete: 'cascade',
         },
 
         id_product:{
