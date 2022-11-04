@@ -6,9 +6,6 @@ const moment = require("moment");
 const jwt = require("jwt-simple");
 const { json } = require("sequelize");
 
-
-
-
 const createToken = (user) => {
   const payload = {
     userId: user.id,
@@ -21,7 +18,7 @@ const createToken = (user) => {
 
 router.get("/", async (req, res) => {
   try {
-    const users = await User.findAll({order:[["name", "ASC"]]});
+    const users = await User.findAll({ order: [["name", "ASC"]] });
 
     return res.json(users);
   } catch (error) {
@@ -39,9 +36,8 @@ router.get("/getUserByName/:userName", async (req, res) => {
 
     if (!user) return res.json({ error: "No se encontro ese usuario" });
     return res.json(user);
-    
   } catch (error) {
-    return res.json({error});
+    return res.json({ error });
   }
 });
 
@@ -55,9 +51,8 @@ router.get("/getUserByCel/:userCel", async (req, res) => {
 
     if (!user) return res.json({ error: "No se encontro ese usuario" });
     return res.json(user);
-    
   } catch (error) {
-    return res.json({error});
+    return res.json({ error });
   }
 });
 
@@ -65,14 +60,14 @@ router.post("/", async (req, res) => {
   try {
     const cel = req.body.cel;
 
-    const exist = User.findAll({where: {cel: cel}});
+    const exist = await User.findAll({ where: { cel: cel } });
 
-    if(exist.lenght > 0){
-      return res.json({error: "ya existe el usuario"});
+    if (exist.length > 0) {
+      return res.json({ error: "ya existe el usuario" });
+    } else {
+      const user = await User.create(req.body);
+      return res.json(user);
     }
-
-    const user = await User.create(req.body);
-    return res.json(user);
   } catch (error) {
     return console.log(json({ error }));
   }
@@ -80,7 +75,7 @@ router.post("/", async (req, res) => {
 
 router.put("/:userId", async (req, res) => {
   const { userId } = req.params;
-  
+
   if (!userId) return res.status(404).send("Usero no encontrado");
   try {
     await User.update(req.body, {
@@ -129,14 +124,14 @@ router.post(
 router.post("/login", async (req, res) => {
   const email = req.body.email || "";
   const pass = req.body.pass || "";
-  
+
   try {
     const user = await User.findOne({ where: { email: email } });
     if (!user) throw "Error en email";
 
     const equals = user.pass;
 
-    if ( !(equals === pass) ) throw "Error en contraseña";
+    if (!(equals === pass)) throw "Error en contraseña";
 
     res.json({ success: createToken(user) });
   } catch (error) {
