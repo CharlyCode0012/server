@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("getUserByName/:userName", async (req, res) => {
+router.get("/getUserByName/:userName", async (req, res) => {
   const { userName } = req.params;
 
   try {
@@ -45,7 +45,7 @@ router.get("getUserByName/:userName", async (req, res) => {
   }
 });
 
-router.get("getUserByCel/:userCel", async (req, res) => {
+router.get("/getUserByCel/:userCel", async (req, res) => {
   const { userCel } = req.params;
 
   try {
