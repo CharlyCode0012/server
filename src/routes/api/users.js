@@ -65,7 +65,7 @@ router.post("/", async (req, res) => {
   try {
     const cel = req.body.cel;
 
-    const exist = User.findOne({where: {cel: cel}});
+    const exist = User.findAll({where: {cel: cel}});
 
     if(exist.lenght > 0){
       return res.json({error: "ya existe el usuario"});
