@@ -28,6 +28,7 @@ module.exports = (sequelize, type) =>{
                 model:'clients',
                 key: 'number'
             },
+            onDelete: 'cascade',
         },
 
         id_place:{
@@ -36,6 +37,7 @@ module.exports = (sequelize, type) =>{
                 model:'places_deliveries',
                 key: 'id'
             },
+            onDelete: 'cascade',
         },
 
         id_order:{
@@ -44,6 +46,7 @@ module.exports = (sequelize, type) =>{
                 model:'orders',
                 key: 'id'
             },
+            onDelete: 'cascade',
         },
     })
 }

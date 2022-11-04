@@ -24,7 +24,9 @@ module.exports = (sequelize, type) => {
         model: "users",
         key: "id",
       },
+      onDelete: 'cascade',
     },
+    
 
     id_product: {
       type: type.INTEGER,
@@ -32,6 +34,7 @@ module.exports = (sequelize, type) => {
         model: "products",
         key: "id",
       },
+      onDelete: 'cascade',
     },
   });
 };

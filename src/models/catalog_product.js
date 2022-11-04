@@ -12,6 +12,7 @@ module.exports = (sequelize, type) =>{
                 model:'products',
                 key: 'id'
             },
+            onDelete: 'cascade',
             allowNull: false
         },
 
@@ -21,6 +22,7 @@ module.exports = (sequelize, type) =>{
                 model:'catalogs',
                 key: 'id'
             },
+            onDelete: 'cascade',
             allowNull: false
         }
     });

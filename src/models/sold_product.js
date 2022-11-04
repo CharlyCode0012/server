@@ -30,6 +30,8 @@ module.exports = (sequelize, type) =>{
                 model:'products',
                 key: 'id'
             },
+            onDelete: 'cascade',
         }
     });
 }
+//ORM -> servidor mysql y backend

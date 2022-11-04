@@ -19,7 +19,8 @@ module.exports = (sequelize, type) =>{
             references: {
                 model:'clients',
                 key: 'number'
-            }
+            },
+            onDelete: 'cascade',
         },
 
         id_product:{
@@ -27,7 +28,8 @@ module.exports = (sequelize, type) =>{
             references: {
                 model:'products',
                 key: 'id'
-            }
+            },
+            onDelete: 'cascade',
         },
     })
 }

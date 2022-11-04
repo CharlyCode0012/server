@@ -20,6 +20,7 @@ module.exports = (sequelize, type) =>{
                 model:'products',
                 key: 'id'
             },
+            onDelete: 'cascade',
         },
 
         id_client:{
@@ -28,6 +29,7 @@ module.exports = (sequelize, type) =>{
                 model:'clients',
                 key: 'number'
             },
+            onDelete: 'cascade',
         }
         
     })
