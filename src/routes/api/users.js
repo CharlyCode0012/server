@@ -63,7 +63,7 @@ router.post("/", async (req, res) => {
     const exist = await User.findAll({ where: { cel: cel } });
 
     if (exist.length > 0) {
-      return res.json({ error: "ya existe el usuario" });
+      return res.json({ err: "ya existe el usuario" });
     } else {
       const user = await User.create(req.body);
       return res.json(user);
