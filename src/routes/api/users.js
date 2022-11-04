@@ -45,8 +45,48 @@ router.get("/:userId", async (req, res) => {
   }
 });
 
+router.get("/:userName", async (req, res) => {
+  const { userName } = req.params;
+
+  try {
+    const user = await User.findAll({
+      where: { name: userName },
+    });
+
+    if (!user) return res.json({ error: "No se encontro ese usuario" });
+    return res.json(user);
+    
+  } catch (error) {
+    return res.json({error});
+  }
+});
+
+router.get("/:userCel", async (req, res) => {
+  const { userCel } = req.params;
+
+  try {
+    const user = await User.findOne({
+      where: { cel: userCel },
+    });
+
+    if (!user) return res.json({ error: "No se encontro ese usuario" });
+    return res.json(user);
+    
+  } catch (error) {
+    return res.json({error});
+  }
+});
+
 router.post("/", async (req, res) => {
   try {
+    const cel = req.body.cel;
+
+    const exist = User.findOne({where: {cel: cel}});
+
+    if(exist.lenght > 0){
+      return res.json({error: "ya existe el usuario"});
+    }
+
     const user = await User.create(req.body);
     return res.json(user);
   } catch (error) {
