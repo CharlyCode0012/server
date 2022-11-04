@@ -8,7 +8,7 @@ module.exports = (sequelize, type) =>{
             autoIncrement: true
         },
 
-        address:{
+        name:{
             type: type.TEXT('tiny'),
             allowNull: false
         },

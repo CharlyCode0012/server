@@ -5,6 +5,10 @@ module.exports = (sequelize, type) =>{
             primaryKey: true,
             autoIncrement: true
         },
+        name:{
+            type: type.STRING(50),
+            allowNUll: false,
+        },
         CLABE:{
             type: type.STRING(30),
             allowNUll: false
