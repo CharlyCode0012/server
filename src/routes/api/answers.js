@@ -15,7 +15,7 @@ router.get('/:answerId', async (req, res)=>{
 });
 
 router.post('/:', async (req, res)=>{
-    const answer = Answer.create(req.body);
+    const answer = await Answer.create(req.body);
     res.json(answer);
 });
 

@@ -15,7 +15,7 @@ router.get('/:placeId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const place = PlaceDelivery.create(req.body);
+    const place = await PlaceDelivery.create(req.body);
     res.json(place);
 });
 

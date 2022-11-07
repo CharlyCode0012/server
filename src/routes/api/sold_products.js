@@ -15,7 +15,7 @@ router.get('/:soldProdId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const soldProd = SoldProd.create(req.body);
+    const soldProd = await SoldProd.create(req.body);
     res.json(soldProd);
 });
 

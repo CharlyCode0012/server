@@ -1,5 +1,5 @@
 const router = require('express').Router();
-
+const { json } = require("sequelize");
 const {Order} = require('../../db/db');
 
 router.get('/', async (req, res)=>{
@@ -15,7 +15,7 @@ router.get('/:orderId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const order = Order.create(req.body);
+    const order = await Order.create(req.body);
     res.json(order);
 });
 

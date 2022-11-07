@@ -1,9 +1,9 @@
 module.exports = (sequelize, type) =>{
     return sequelize.define('payment_method', {
         id:{
-            type: type.INTEGER,
+            type: type.STRING(50),
             primaryKey: true,
-            autoIncrement: true
+            autoIncrement: false
         },
         name:{
             type: type.STRING(50),

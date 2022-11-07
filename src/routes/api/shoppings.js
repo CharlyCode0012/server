@@ -15,7 +15,7 @@ router.get('/:shoppingId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const shopping = Shopping.create(req.body);
+    const shopping = await Shopping.create(req.body);
     res.json(shopping);
 });
 

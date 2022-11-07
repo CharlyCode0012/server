@@ -15,7 +15,7 @@ router.get('/:clientId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const Client = Client.create(req.body);
+    const Client = await Client.create(req.body);
     res.json(Client);
 });
 

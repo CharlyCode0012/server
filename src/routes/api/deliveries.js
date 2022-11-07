@@ -15,7 +15,7 @@ router.get('/:deliveryId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const delivery = Delivery.create(req.body);
+    const delivery = await Delivery.create(req.body);
     res.json(delivery);
 });
 

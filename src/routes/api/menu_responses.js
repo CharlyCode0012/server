@@ -15,7 +15,7 @@ router.get('/:menuResId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const menuRes = MenuRes.create(req.body);
+    const menuRes = await MenuRes.create(req.body);
     res.json(menuRes);
 });
 

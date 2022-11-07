@@ -15,7 +15,7 @@ router.get('/:catalogPrId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const catalogPr = CatalogProduct.create(req.body);
+    const catalogPr = await CatalogProduct.create(req.body);
     res.json(catalogPr);
 });
 

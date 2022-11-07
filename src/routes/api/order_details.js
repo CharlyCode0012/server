@@ -15,7 +15,7 @@ router.get('/:orderDetailsId', async (req, res)=>{
 });
 
 router.post('/', async (req, res)=>{
-    const orderDetails = OrderDetails.create(req.body);
+    const orderDetails = await OrderDetails.create(req.body);
     res.json(orderDetails);
 });
 

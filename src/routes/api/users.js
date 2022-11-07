@@ -17,8 +17,9 @@ const createToken = (user) => {
 };
 
 router.get("/", async (req, res) => {
+  const order = req.query.order || "ASC";
   try {
-    const users = await User.findAll({ order: [["name", "ASC"]] });
+    const users = await User.findAll({ order: [["name", order]] });
 
     return res.json(users);
   } catch (error) {
@@ -28,10 +29,11 @@ router.get("/", async (req, res) => {
 
 router.get("/getUserByName/:userName", async (req, res) => {
   const { userName } = req.params;
-
+  const order = req.query.order;
   try {
     const user = await User.findAll({
       where: { name: userName },
+      order: [["name", order]],
     });
 
     if (!user) return res.json({ error: "No se encontro ese usuario" });
@@ -63,7 +65,7 @@ router.post("/", async (req, res) => {
     const exist = await User.findAll({ where: { cel: cel } });
 
     if (exist.length > 0) {
-      return res.json({ err: "ya existe el usuario" });
+      return res.json({ err: true, status: 422, statusText: "Ya hay un usuario con ese numero" });
     } else {
       const user = await User.create(req.body);
       return res.json(user);
@@ -116,8 +118,13 @@ router.post(
       return res.status(422).json({ errores: errors.array() });
     }
 
-    const user = await User.create(req.body);
-    res.json(user);
+    try {
+      const user = await User.create(req.body);
+      return res.json(user);
+    } catch (error) {
+      return res.json(error);
+    }
+    
   }
 );
 
