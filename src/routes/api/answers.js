@@ -9,6 +9,7 @@ router.get('/', async (req, res)=>{
 
 router.get('/:answerId', async (req, res)=>{
     const {answerId} = req.params;
+    
     const answer = await Answer.findAll({where: {id: answerId}});
 
     res.json(answer);

@@ -1,9 +1,9 @@
 module.exports = (sequelize, type) =>{
     return sequelize.define('menu', {
         id:{
-            type: type.INTEGER,
+            type: type.STRING(50),
             primaryKey: true,
-            autoIncrement: true
+            autoIncrement: false
         },
 
         option_key:{
