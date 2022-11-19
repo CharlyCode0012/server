@@ -3,14 +3,17 @@ const { STRING } = require("sequelize");
 module.exports = (sequelize, type) =>{
     return sequelize.define('places_deliverie', {
         id:{
-            type: type.INTEGER,
+            type: type.STRING(50),
             primaryKey: true,
-            autoIncrement: true
+            autoIncrement: false
         },
 
         name:{
             type: type.TEXT('tiny'),
             allowNull: false
+        },
+        address:{
+            type: type.TEXT('tiny')
         },
 
         cp:{

@@ -32,7 +32,7 @@ module.exports = (sequelize, type) =>{
         },
 
         id_place:{
-            type: type.INTEGER,
+            type: type.STRING(50),
             references: {
                 model:'places_deliveries',
                 key: 'id'
