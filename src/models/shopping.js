@@ -15,7 +15,7 @@ module.exports = (sequelize, type) =>{
         },
 
         id_product:{
-            type: type.INTEGER,
+            type: type.STRING(50),
             references: {
                 model:'products',
                 key: 'id'

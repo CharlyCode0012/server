@@ -29,13 +29,13 @@ module.exports = (sequelize, type) => {
     },
 
     id_place: {
-      type: type.TINYINT,
+      type: type.STRING(50),
       reference: "place_deliveries",
       referenceKey: "id",
     },
 
     id_payment_method: {
-      type: type.TINYINT,
+      type: type.STRING(50),
       reference: "payment_methods",
       referenceKey: "id",
     },

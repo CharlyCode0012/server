@@ -1,13 +1,35 @@
 const router = require("express").Router();
+const { QueryTypes } = require('sequelize');
 
-const { Product } = require("../../db/db");
+const { Product, CatalogProduct, CategoryProd } = require("../../db/db");
 
 router.get("/", async (req, res) => {
-  const products = await Product.findAll();
-  res.json(products);
+  try {
+
+  const {idCatalog} = req.query || '';
+
+  const c_products = await CatalogProduct.findAll({where: {id_catalog: idCatalog}});
+  let products = [];
+  if(idCatalog!== ''){
+    products.push(c_products.map( async(el)=>{
+      try {
+        return await Product.findOne({where: {id: el.id_product}});
+      } catch (error) {
+        return error;
+      } 
+    }));
+    
+  }
+  
+   res.json(products);
+  } catch (error) {
+    res.json(error);
+  }
+  
+ 
 });
 
-router.get('/:productId', async (req, res) =>{
+router.get('/getByKeyWord/:keyWord', async (req, res) =>{
   const {productId} = req.params;
 
   const product = await Product.findAll({

@@ -1,43 +1,74 @@
-const router = require('express').Router();
+const router = require("express").Router();
 
-const {Category} = require('../../db/db');
+const { Category } = require("../../db/db");
 
-router.get('/', async (req, res)=>{
-    const categories = await Category.findAll();
-    res.json(categories);
+router.get("/", async (req, res) => {
+  const order = req.query.order || "ASC";
+  const categories = await Category.findAll({order: [["name", order]]});
+  res.json(categories);
 });
 
-router.get('/:categoryId', async (req, res)=>{
-    const {categoryId} = req.params;
-    const category = await Category.findAll({where: {id: categoryId}});
+router.get("/getCategoryByState/:categoryState", async (req, res) => {
+  const { categoryState } = req.params;
+  const order = req.query.order;
 
-    res.json(category);
-});
-
-router.post('/', async (req, res)=>{
-    const category = await Category.create(req.body);
-    res.json(category);
-});
-
-router.put('/:categoryId', async (req, res)=>{
-    const {categoryId} = req.params;
-    const isFind = await Category.findOne({where: {id: categoryId}});
-
-    if (!isFind) return res.status(404).send("Categoria no encontrada");
-
-     await Category.update(req.body, {
-        where: {id: categoryId}
+  try {
+    const category = await Category.findAll({
+      where: { state: categoryState },
+      order: [["name", order]],
     });
-    res.json({success: `se ha modificado ${categoryId}`});
-})
+    res.json(category);
+  } catch (error) {
+    res.json({ error });
+  }
+});
 
-router.delete('/:categoryId', async (req, res)=>{
-    const {categoryId} = req.params;
-    const isFind = await Category.findOne({where: {id: categoryId}});
-    
-    if (!isFind) return res.status(404).send("Categoria no encontrada");
+router.get("/getCategoryByName/:categoryName", async (req, res) => {
+  const { categoryName } = req.params;
+  const order = req.query.order;
 
-    await Category.destroy({where: {id: categoryId}});
-})
+  try {
+    const category = await Category.findAll({
+      where: { name: categoryName },
+      order: [["name", order]],
+    });
+    res.json(category);
+  } catch (error) {
+    res.json({ error });
+  }
+});
+
+router.get("/:categoryId", async (req, res) => {
+  const { categoryId } = req.params;
+  const category = await Category.findAll({ where: { id: categoryId } });
+
+  res.json(category);
+});
+
+router.post("/", async (req, res) => {
+  const category = await Category.create(req.body);
+  res.json(category);
+});
+
+router.put("/:categoryId", async (req, res) => {
+  const { categoryId } = req.params;
+  const isFind = await Category.findOne({ where: { id: categoryId } });
+
+  if (!isFind) return res.status(404).send("Categoria no encontrada");
+
+  await Category.update(req.body, {
+    where: { id: categoryId },
+  });
+  res.json({ success: `se ha modificado ${categoryId}` });
+});
+
+router.delete("/:categoryId", async (req, res) => {
+  const { categoryId } = req.params;
+  const isFind = await Category.findOne({ where: { id: categoryId } });
+
+  if (!isFind) return res.status(404).send("Categoria no encontrada");
+
+  await Category.destroy({ where: { id: categoryId } });
+});
 
 module.exports = router;
