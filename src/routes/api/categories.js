@@ -4,8 +4,14 @@ const { Category } = require("../../db/db");
 
 router.get("/", async (req, res) => {
   const order = req.query.order || "ASC";
-  const categories = await Category.findAll({order: [["name", order]]});
-  res.json(categories);
+  try {
+    const categories = await Category.findAll({
+      order: [["name", order]],
+    });
+    res.json(categories);
+  } catch (error) {
+    res.json({ error });
+  }
 });
 
 router.get("/getCategoryByState/:categoryState", async (req, res) => {
@@ -40,35 +46,52 @@ router.get("/getCategoryByName/:categoryName", async (req, res) => {
 
 router.get("/:categoryId", async (req, res) => {
   const { categoryId } = req.params;
-  const category = await Category.findAll({ where: { id: categoryId } });
+  try {
+    const category = await Category.findAll({ where: { id: categoryId } });
 
-  res.json(category);
+    res.json(category);
+  } catch (error) {
+    res.json({ error });
+  }
 });
 
 router.post("/", async (req, res) => {
-  const category = await Category.create(req.body);
-  res.json(category);
+  try {
+    const category = await Category.create(req.body);
+    res.json(category);
+  } catch (error) {
+    res.json({ error });
+  }
 });
 
 router.put("/:categoryId", async (req, res) => {
   const { categoryId } = req.params;
-  const isFind = await Category.findOne({ where: { id: categoryId } });
 
-  if (!isFind) return res.status(404).send("Categoria no encontrada");
+  try {
+    const isFind = await Category.findOne({ where: { id: categoryId } });
 
-  await Category.update(req.body, {
-    where: { id: categoryId },
-  });
-  res.json({ success: `se ha modificado ${categoryId}` });
+    if (!isFind) return res.status(404).send("Categoria no encontrada");
+
+    await Category.update(req.body, {
+      where: { id: categoryId },
+    });
+    res.json({ success: `se ha modificado ${categoryId}` });
+  } catch (error) {
+    res.json({ error });
+  }
 });
 
 router.delete("/:categoryId", async (req, res) => {
   const { categoryId } = req.params;
-  const isFind = await Category.findOne({ where: { id: categoryId } });
+  try {
+    const isFind = await Category.findOne({ where: { id: categoryId } });
 
-  if (!isFind) return res.status(404).send("Categoria no encontrada");
+    if (!isFind) return res.status(404).send("Categoria no encontrada");
 
-  await Category.destroy({ where: { id: categoryId } });
+    await Category.destroy({ where: { id: categoryId } });
+  } catch (error) {
+    res.json({ error });
+  }
 });
 
 module.exports = router;

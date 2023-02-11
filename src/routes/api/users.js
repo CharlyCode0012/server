@@ -1,20 +1,9 @@
 const router = require("express").Router();
-const bcrypt = require("bcryptjs");
 const { User } = require("../../db/db");
 const { check, validationResult } = require("express-validator");
-const moment = require("moment");
-const jwt = require("jwt-simple");
 const { json } = require("sequelize");
 
-const createToken = (user) => {
-  const payload = {
-    id: user.id,
-    createdAt: moment().unix(),
-    expiredAt: moment().add(5, "minutes").unix(),
-  };
 
-  return jwt.encode(payload, "secret sentence");
-};
 
 router.get("/", async (req, res) => {
   const order = req.query.order || "ASC";
@@ -29,7 +18,7 @@ router.get("/", async (req, res) => {
 
 router.get("/getUserByName/:userName", async (req, res) => {
   const { userName } = req.params;
-  const order = req.query.order;
+  const order = req.query.order || "ASC";
   try {
     const user = await User.findAll({
       where: { name: userName },
@@ -69,7 +58,7 @@ router.get("/getUserByCel/:userCel", async (req, res) => {
 
     const Users= await User.findAll({order:[["name", order]]});
 
-    let users = Users.map((user, index)=>{
+    let users = Users.map((user)=>{
       user.cel = user.cel.replace(/[-]/g, "");
       if(user.cel.includes(userCel)){
         user.cel = formatCel(user.cel);

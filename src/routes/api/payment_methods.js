@@ -12,7 +12,9 @@ router.get("/", async (req, res) => {
       ],
     });
     res.json(payments);
-  } catch (error) {}
+  } catch (error) {
+    res.json({ error });
+  }
 });
 
 router.get("/getMethodByCard/:cardPayment", async (req, res) => {
@@ -56,8 +58,6 @@ router.get("/:paymentId", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { order } = req.query;
-
   try {
     const payment = await Payment.create(req.body);
     console.log(payment);

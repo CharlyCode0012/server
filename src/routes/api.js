@@ -1,6 +1,6 @@
 const router = require('express').Router();
 
-const middleware = require('./middlewares');
+
 
 const apiAnswersRouter = require('./api/answers');
 const apiCatalogsRouter = require('./api/catalogs');
