@@ -23,7 +23,6 @@ const questionModel = require("../models/question");
 
 const {
   DB_PORT,
-  PORT,
   DB_DATABASE,
   DB_USER,
   DB_PASSWORD,
