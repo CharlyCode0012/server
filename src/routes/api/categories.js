@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const XLSX = require("xlsx")
+const ExcelJS = require("exceljs")
 
 const { Category } = require("../../db/db");
 
@@ -24,20 +24,36 @@ router.get("/download", async (req, res) => {
   // Get categories from DB
   const categoriesQuery = await Category.findAll()
   const categories = JSON.parse(JSON.stringify(categoriesQuery)).map(category => ({
-    "ID": category.id,
-    "Nombre": category.name,
-    "Estado": category.state
+    "id": category.id,
+    "name": category.name,
+    "state": category.state
   }))
 
-  // Create excel spreadsheet
-  const worksheet = XLSX.utils.json_to_sheet(categories, {
-    origin: "B2"
-  });
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Lista de Categorias");
+  // Create excel workbook, where sheets will be stored
+  const workbook = new ExcelJS.Workbook();
 
-  // Convert spreadsheet to transferable data in the response
-  const fileBuffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+  // Create a sheet and assign to it some columns metadata to insert rows
+  const worksheet = workbook.addWorksheet("Lista de Categorias")
+  worksheet.columns = [
+    { header: "ID", key: "id", width: 20 },
+    { header: "Nombre", key: "name", width: 25 },
+    { header: "Estado", key: "state", width: 10 },
+  ]
+
+  // Style each column
+  const [ idColumn, nameColumn, stateColumn ] = [ worksheet.getColumn("id"), worksheet.getColumn("name"), worksheet.getColumn("state") ];
+  const alignment = { horizontal: "center" };
+  [ idColumn.alignment, nameColumn.alignment, stateColumn.alignment ] = [ alignment, alignment, alignment ];
+
+  // Style header row
+  const headerRow = worksheet.getRow(1)
+  headerRow.font = { bold: true, size: 14 };
+
+  // Add data of every category
+  for (const category of categories)
+    worksheet.addRow(category)
+
+  const fileBuffer = await workbook.xlsx.writeBuffer();
 
   res.attachment("Categorias.xlsx")
   res.status(200).end(fileBuffer);
