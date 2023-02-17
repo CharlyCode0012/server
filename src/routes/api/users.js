@@ -146,9 +146,9 @@ router.post(
 
 
 router.post("/login", async (req, res) => {
-  const cel = req.body.cel || '';
-  const pass = req.body.pass || '';
-  const name = req.body.name || '';
+  const cel = req.body.cel ?? '';
+  const pass = req.body.pass ?? '';
+  const name = req.body.name ?? '';
 
   try {
     const user = await User.findOne({ where: { cel: cel } });

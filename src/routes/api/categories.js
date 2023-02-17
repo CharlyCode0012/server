@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const XLSX = require("xlsx")
 
 const { Category } = require("../../db/db");
 
@@ -13,6 +14,32 @@ router.get("/", async (req, res) => {
     res.json({ error });
   }
 });
+
+/**
+ * Returns an xlsx file that contains the info of 
+ * the existing categories in the DB 
+ */
+router.get("/download", async (req, res) => {
+
+  // Get categories from DB
+  const categoriesQuery = await Category.findAll()
+  const categories = JSON.parse(JSON.stringify(categoriesQuery)).map(category => ({
+    "ID": category.id,
+    "Nombre": category.name,
+    "Estado": category.state
+  }))
+
+  // Create excel spreadsheet
+  const worksheet = XLSX.utils.json_to_sheet(categories);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Lista de Categorias");
+
+  // Convert spreadsheet to transferable data in the response
+  const fileBuffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+  res.attachment("Categorias.xlsx")
+  res.status(200).end(fileBuffer);
+})
 
 router.get("/getCategoryByState/:categoryState", async (req, res) => {
   const { categoryState } = req.params;

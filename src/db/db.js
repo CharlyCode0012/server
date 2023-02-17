@@ -1,11 +1,10 @@
 const Sequelize = require("sequelize");
 
-//const answerModel = require('../models/answer');
 const productModel = require("../models/product.js");
 const userModel = require("../models/user");
 const catalogModel = require("../models/catalog");
 const catalogProductModel = require("../models/catalog_product");
-const categoryModel = require("../models/categorie");
+const categoryModel = require("../models/category");
 const categoryProdModel = require("../models/categories_product");
 const clientModel = require("../models/client");
 const menuModel = require("../models/menu");
@@ -39,6 +38,7 @@ const conn = new Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
   host: DB_HOST,
   dialect: DB_DIALECT,
   port: DB_PORT,
+  logging: false,
 }); 
 
 const Product = productModel(conn, Sequelize);
