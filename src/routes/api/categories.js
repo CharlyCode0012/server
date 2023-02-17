@@ -30,7 +30,9 @@ router.get("/download", async (req, res) => {
   }))
 
   // Create excel spreadsheet
-  const worksheet = XLSX.utils.json_to_sheet(categories);
+  const worksheet = XLSX.utils.json_to_sheet(categories, {
+    origin: "B2"
+  });
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Lista de Categorias");
 
