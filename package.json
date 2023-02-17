@@ -24,7 +24,8 @@
     "jwt-simple": "^0.5.6",
     "moment": "^2.29.4",
     "mysql2": "^2.3.3",
-    "sequelize": "^6.25.3"
+    "sequelize": "^6.25.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.2/xlsx-0.19.2.tgz"
   },
   "devDependencies": {
     "eslint": "^8.33.0"
