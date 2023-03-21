@@ -57,7 +57,7 @@ router.get("/download", async (req, res) => {
 
   res.attachment("Categorias.xlsx")
   res.status(200).end(fileBuffer);
-})
+});
 
 router.get("/getCategoryByState/:categoryState", async (req, res) => {
   const { categoryState } = req.params;
