@@ -9,6 +9,9 @@ router.get("/", async (req, res) => {
   const order = req.query.order || "ASC";
   try {
     const users = await User.findAll({ order: [["name", order]] });
+    
+    delete users.createdAt;
+    delete users.updatedAt;
 
     return res.json(users);
   } catch (error) {
@@ -152,7 +155,7 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await User.findOne({ where: { cel: cel } });
-    if (!user) throw {statusText: 'Error en cel'};
+    if (!user) throw {statusText: 'Error en cel', cel: cel};
 
     const equals = user.pass;
     const equalsName = user.name;
