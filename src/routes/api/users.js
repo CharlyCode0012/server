@@ -168,7 +168,7 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     error.status = 400;
     error.err = true;
-    res.json(error);
+    res.send(JSON.stringify({error}));
   }
 });
 
