@@ -149,7 +149,6 @@ router.post(
 
 
 router.post("/login", async (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
   const cel = req.body.cel ?? '';
   const pass = req.body.pass ?? '';
   const name = req.body.name ?? '';
