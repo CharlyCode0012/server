@@ -149,6 +149,7 @@ router.post(
 
 
 router.post("/login", async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
   const cel = req.body.cel ?? '';
   const pass = req.body.pass ?? '';
   const name = req.body.name ?? '';
@@ -168,7 +169,7 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     error.status = 400;
     error.err = true;
-    res.send(JSON.stringify({error}));
+    res.json(error);
   }
 });
 
