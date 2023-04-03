@@ -164,7 +164,7 @@ router.post("/login", async (req, res) => {
     
     if (!(equals === pass)) throw {statusText: 'Error en contraseña'};
 
-    res.send(JSON.stringify({ success: user, err: false }));
+    res.json({ success: user, err: false });
   } catch (error) {
     error.status = 400;
     error.err = true;
