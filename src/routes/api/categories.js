@@ -2,16 +2,22 @@ const router = require("express").Router();
 const ExcelJS = require("exceljs")
 
 const { Category } = require("../../db/db");
+const { defaultResponse } = require("../../models/defaultResponse/defaultResponse");
 
 router.get("/", async (req, res) => {
   const order = req.query.order || "ASC";
   try {
-    const categories = await Category.findAll({
+    let categories = await Category.findAll({
       order: [["name", order]],
     });
-    res.json(categories);
+
+    if(categories === undefined || categories.length == 0){
+      categories = defaultResponse;
+    }
+
+    res.json({success: categories, err: false});
   } catch (error) {
-    res.json({ error });
+    res.json(error);
   }
 });
 
@@ -57,7 +63,7 @@ router.get("/download", async (req, res) => {
 
   res.attachment("Categorias.xlsx")
   res.status(200).end(fileBuffer);
-})
+});
 
 router.get("/getCategoryByState/:categoryState", async (req, res) => {
   const { categoryState } = req.params;
@@ -94,7 +100,7 @@ router.get("/:categoryId", async (req, res) => {
   try {
     const category = await Category.findAll({ where: { id: categoryId } });
 
-    res.json(category);
+    res.json({success: category, err: false});
   } catch (error) {
     res.json({ error });
   }
