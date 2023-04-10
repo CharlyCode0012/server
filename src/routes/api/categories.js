@@ -15,9 +15,9 @@ router.get("/", async (req, res) => {
       categories = defaultResponse;
     }
 
-    res.json({ categories  });
+    res.json({success: categories, err: false});
   } catch (error) {
-    res.json({ error });
+    res.json(error);
   }
 });
 
@@ -100,7 +100,7 @@ router.get("/:categoryId", async (req, res) => {
   try {
     const category = await Category.findAll({ where: { id: categoryId } });
 
-    res.json(category);
+    res.json({success: category, err: false});
   } catch (error) {
     res.json({ error });
   }

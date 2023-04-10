@@ -1,5 +1,5 @@
 const defaultResponse = {
-    sucess: [{}],
+    sucess: [],
     err: false,
     status: 200
 }
