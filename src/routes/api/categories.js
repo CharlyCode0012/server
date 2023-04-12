@@ -66,7 +66,8 @@ router.get("/download", async (req, res) => {
 });
 
 router.get("/getCategoryByState/:categoryState", async (req, res) => {
-  const { categoryState } = req.params;
+  let { categoryState } = req.params;
+  categoryState = categoryState == "false" || categoryState == "0" ? 0 : 1;
   const order = req.query.order;
 
   try {
@@ -74,7 +75,7 @@ router.get("/getCategoryByState/:categoryState", async (req, res) => {
       where: { state: categoryState },
       order: [["name", order]],
     });
-    res.json(category);
+    res.json({success: category, err: false});
   } catch (error) {
     res.json({ error });
   }
@@ -89,7 +90,7 @@ router.get("/getCategoryByName/:categoryName", async (req, res) => {
       where: { name: categoryName },
       order: [["name", order]],
     });
-    res.json(category);
+    res.json({success: category, err: false});
   } catch (error) {
     res.json({ error });
   }
