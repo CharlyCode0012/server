@@ -2,6 +2,9 @@ const router = require("express").Router();
 
 const { PlaceDelivery } = require("../../db/db");
 
+/**
+ * Retrieves all the delivery places from the DB
+ */
 router.get("/", async (req, res) => {
   const places = await PlaceDelivery.findAll();
   res.json(places);
@@ -70,6 +73,9 @@ router.put("/:placeId", async (req, res) => {
   res.json({ success: `se ha modificado ${placeId}` });
 });
 
+/**
+ * Deletes a place from the DB
+ */
 router.delete("/:placeId", async (req, res) => {
   const { placeId } = req.params;
   const isFind = await PlaceDelivery.findOne({ where: { id: placeId } });
@@ -77,6 +83,7 @@ router.delete("/:placeId", async (req, res) => {
   if (!isFind) return res.status(404).send("Lugar no encontrado");
 
   await PlaceDelivery.destroy({ where: { id: placeId } });
+  res.status(200).send();
 });
 
 module.exports = router;
