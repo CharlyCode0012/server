@@ -149,9 +149,9 @@ router.post(
 
 
 router.post("/login", async (req, res) => {
-  const cel = req.body.cellphone ?? '';
-  const pass = req.body.password ?? '';
-  const name = req.body.username ?? '';
+  const cel = req.body.cell ?? '';
+  const pass = req.body.pass ?? '';
+  const name = req.body.name ?? '';
 
   try {
     const user = await User.findOne({ where: { cel: cel } });

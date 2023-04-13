@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
 
     res.json({success: categories, err: false});
   } catch (error) {
-    res.json(error);
+    res.json({success: error, err: true});
   }
 });
 
@@ -127,7 +127,7 @@ router.put("/:categoryId", async (req, res) => {
     await Category.update(req.body, {
       where: { id: categoryId },
     });
-    res.json({ success: `se ha modificado ${categoryId}` });
+    res.json({ success: `se ha modificado ${categoryId}`, err: false });
   } catch (error) {
     res.json({ error });
   }
@@ -141,6 +141,7 @@ router.delete("/:categoryId", async (req, res) => {
     if (!isFind) return res.status(404).send("Categoria no encontrada");
 
     await Category.destroy({ where: { id: categoryId } });
+    res.json({success: `se ha eliminado ${categoryId}`,err: false})
   } catch (error) {
     res.json({ error });
   }
