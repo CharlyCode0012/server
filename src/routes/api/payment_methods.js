@@ -22,7 +22,60 @@ router.get("/", async (req, res) => {
   }
 });
 
-// TODO: Add download route
+/**
+ * Returns an xlsx file that contains the info of 
+ * the existing payment methods in the DB 
+ */
+router.get("/download", async (req, res) => {
+
+  // Get payment methods from DB
+  const paymentMethodsQuery = await Payment.findAll()
+  const paymentMethods = JSON.parse(JSON.stringify(paymentMethodsQuery))
+
+  // Create excel workbook, where sheets will be stored
+  const workbook = new ExcelJS.Workbook();
+
+  // Create a sheet and assign to it some columns metadata to insert rows
+  const worksheet = workbook.addWorksheet("Lugares de entrega")
+  worksheet.columns = [
+    { header: "ID", key: "id", width: 20 },
+    { header: "Titular", key: "name", width: 25 },
+    { header: "CLABE", key: "CLABE", width: 25 },
+    { header: "No. Tarjeta", key: "no_card", width: 25 },
+    { header: "Banco", key: "bank", width: 25 },
+    { header: "Lugares para depositar", key: "subsidary", width: 30 },
+  ]
+
+  // Style each column
+  const idColumn = worksheet.getColumn("id"),
+        ownerColumn = worksheet.getColumn("name"),
+        clabeColumn = worksheet.getColumn("CLABE"),
+        cardNumberColumn = worksheet.getColumn("no_card"),
+        bankColumn = worksheet.getColumn("bank"),
+        subsidaryColumn = worksheet.getColumn("subsidary");
+
+  const alignment = { horizontal: "center" };
+
+  idColumn.alignment = alignment
+  ownerColumn.alignment = alignment
+  clabeColumn.alignment = alignment
+  cardNumberColumn.alignment = alignment
+  bankColumn.alignment = alignment
+  subsidaryColumn.alignment = alignment
+
+  // Style header row
+  const headerRow = worksheet.getRow(1)
+  headerRow.font = { bold: true, size: 14 };
+
+  // Add data of every payment method
+  for (const paymentMethod of paymentMethods)
+    worksheet.addRow(paymentMethod)
+
+  const fileBuffer = await workbook.xlsx.writeBuffer();
+
+  res.attachment("Metodos de pago.xlsx")
+  res.status(200).end(fileBuffer);
+});
 
 /**
  * Returns all the payment methods that match the given ID
