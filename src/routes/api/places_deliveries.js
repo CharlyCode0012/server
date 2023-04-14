@@ -2,13 +2,24 @@ const router = require("express").Router();
 const ExcelJS = require("exceljs")
 
 const { PlaceDelivery } = require("../../db/db");
+const { Op } = require("sequelize");
 
 /**
  * Retrieves all the delivery places from the DB
  */
 router.get("/", async (req, res) => {
-  const places = await PlaceDelivery.findAll();
-  res.json(places);
+  const order = req.query.order ?? "ASC"
+
+  try {
+    const places = await PlaceDelivery.findAll({
+      order: [["name", order]]
+    });
+
+    res.json(places);
+  }
+  catch {
+    res.sendStatus(500);
+  }
 });
 
 /**
@@ -85,57 +96,99 @@ router.get("/download", async (req, res) => {
   res.status(200).end(fileBuffer);
 });
 
-router.get("/:placeId", async (req, res) => {
-  const { placeId } = req.params;
-  const place = await PlaceDelivery.findAll({ where: { id: placeId } });
+/**
+ * Returns all the places that match the given ID
+ */
+router.get("/searchByID", async (req, res) => {
+  const { order, search } = req.query
+  try {
+    const places = await PlaceDelivery.findAll({ 
+      where: { id: search }, 
+      order: [["id", order]]
+    });
+    res.json(places);
+  }
 
-  res.json(place);
+  catch {
+    res.sendStatus(404);
+  }
+
 });
 
-router.get("/getPlaceByCP/:cp", async (req, res) => {
-  const { cp } = req.params;
-
+/**
+ * Returns all the places that match the given township
+ */
+router.get("/searchByTownship", async (req, res) => {
+  const { order, search } = req.query
   try {
-    const place = await PlaceDelivery.findAll({
-      where: { cp: cp },
+    const places = await PlaceDelivery.findAll({ 
+      where: {
+        name: { [Op.like]: `%${search}%` }
+      },
+      order: [["name", order]]
     });
 
-    if (!place) return res.json({ error: "No se encontro ese lugar" });
-    return res.json(place);
-  } catch (error) {
-    return res.json({ error });
+    res.json(places);
+  }
+
+  catch (error) {
+    res.sendStatus(404);
   }
 });
 
-router.get("/getPlaceByAdress/:address", async (req, res) => {
-  const { address } = req.params;
-  const order = req.query.order || "ASC";
+/**
+ * Returns all the places that match the given address
+ */
+router.get("/searchByAddress", async (req, res) => {
+  const { order, search } = req.query
   try {
-    const Places = await PlaceDelivery.findAll({
-      order: [["name", order]],
+    const places = await PlaceDelivery.findAll({ 
+      where: {
+        address: { [Op.like]: `%${search}%` }
+      },
+      order: [["address", order]]
     });
 
-    let places = Places.map((place)=>{
-      if(place.address.includes(address)){
-        return place;
-      }
-    })
+    res.json(places);
+  }
 
-    places = places.filter(Boolean);
-
-
-    if (!places) return res.json({ error: "No se encontro ese nombre" });
-    return res.json(places);
-  } catch (error) {
-    return res.json({ error });
+  catch (error) {
+    res.sendStatus(404);
   }
 });
 
+/**
+ * Returns all the places that match the given CP
+ */
+router.get("/searchByCP", async (req, res) => {
+  const { order, search } = req.query
+  try {
+    const places = await PlaceDelivery.findAll({ 
+      where: {
+        cp: { [Op.like]: `%${search}%` }
+      },
+      order: [["cp", order]]
+    });
+
+    res.json(places);
+  }
+
+  catch (error) {
+    res.sendStatus(404);
+  }
+});
+
+/**
+ * Creates a new place in the DB
+ */
 router.post("/", async (req, res) => {
   const place = await PlaceDelivery.create(req.body);
   res.json(place);
 });
 
+/**
+ * Updates a place in the DB
+ */
 router.put("/:placeId", async (req, res) => {
   const { placeId } = req.params;
   const isFind = await PlaceDelivery.findOne({ where: { id: placeId } });
