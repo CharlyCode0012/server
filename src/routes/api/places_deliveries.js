@@ -92,7 +92,8 @@ router.get("/download", async (req, res) => {
 
   const fileBuffer = await workbook.xlsx.writeBuffer();
 
-  res.attachment("Lugares de entrega.xlsx")
+  res.setHeader('content-disposition', 'attachment; filename="Lugares de entrega.xlsx"');
+  res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
   res.status(200).end(fileBuffer);
 });
 
