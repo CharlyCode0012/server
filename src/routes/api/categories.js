@@ -61,7 +61,8 @@ router.get("/download", async (req, res) => {
 
   const fileBuffer = await workbook.xlsx.writeBuffer();
 
-  res.attachment("Categorias.xlsx")
+  res.setHeader('content-disposition', 'attachment; filename="Categorias.xlsx"');
+  res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
   res.status(200).end(fileBuffer);
 });
 
