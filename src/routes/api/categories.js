@@ -15,9 +15,9 @@ router.get("/", async (req, res) => {
       categories = defaultResponse;
     }
 
-    res.json({success: categories, err: false});
+    res.json(categories);
   } catch (error) {
-    res.json({success: error, err: true});
+    res.json(error);
   }
 });
 
@@ -65,7 +65,7 @@ router.get("/download", async (req, res) => {
   res.status(200).end(fileBuffer);
 });
 
-router.get("/getCategoryByState/:categoryState", async (req, res) => {
+router.get("/categoryByState/:categoryState", async (req, res) => {
   let { categoryState } = req.params;
   categoryState = categoryState == "false" || categoryState == "0" ? 0 : 1;
   const order = req.query.order;
@@ -75,13 +75,13 @@ router.get("/getCategoryByState/:categoryState", async (req, res) => {
       where: { state: categoryState },
       order: [["name", order]],
     });
-    res.json({success: category, err: false});
+    res.json(category);
   } catch (error) {
-    res.json({ error });
+    res.json(error );
   }
 });
 
-router.get("/getCategoryByName/:categoryName", async (req, res) => {
+router.get("/categoryByName/:categoryName", async (req, res) => {
   const { categoryName } = req.params;
   const order = req.query.order;
 
@@ -90,9 +90,9 @@ router.get("/getCategoryByName/:categoryName", async (req, res) => {
       where: { name: categoryName },
       order: [["name", order]],
     });
-    res.json({success: category, err: false});
+    res.json(category);
   } catch (error) {
-    res.json({ error });
+    res.json(error);
   }
 });
 
@@ -101,9 +101,9 @@ router.get("/:categoryId", async (req, res) => {
   try {
     const category = await Category.findAll({ where: { id: categoryId } });
 
-    res.json({success: category, err: false});
+    res.json(category);
   } catch (error) {
-    res.json({ error });
+    res.json(error);
   }
 });
 
@@ -112,7 +112,7 @@ router.post("/", async (req, res) => {
     const category = await Category.create(req.body);
     res.json(category);
   } catch (error) {
-    res.json({ error });
+    res.json( error );
   }
 });
 
@@ -127,9 +127,9 @@ router.put("/:categoryId", async (req, res) => {
     await Category.update(req.body, {
       where: { id: categoryId },
     });
-    res.json({ success: `se ha modificado ${categoryId}`, err: false });
+    res.json(`se ha modificado ${categoryId}`);
   } catch (error) {
-    res.json({ error });
+    res.json( error );
   }
 });
 
@@ -141,9 +141,9 @@ router.delete("/:categoryId", async (req, res) => {
     if (!isFind) return res.status(404).send("Categoria no encontrada");
 
     await Category.destroy({ where: { id: categoryId } });
-    res.json({success: `se ha eliminado ${categoryId}`,err: false})
+    res.json(`se ha eliminado ${categoryId}`)
   } catch (error) {
-    res.json({ error });
+    res.json( error );
   }
 });
 
