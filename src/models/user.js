@@ -14,7 +14,7 @@ module.exports = (sequelize, type) =>{
             allowNUll: false
         },
         type_use:{
-            type: type.ENUM('admin', 'ayudante', 'vendedor'),
+            type: type.ENUM('admin', 'ayudante'),
             allowNUll: false
         },
         e_mail:{
