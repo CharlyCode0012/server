@@ -1,7 +1,7 @@
 const router = require("express").Router();
+const ExcelJS = require("exceljs")
 const { User } = require("../../db/db");
 const { check, validationResult } = require("express-validator");
-const { json } = require("sequelize");
 const { Op } = require("sequelize");
 
 /**
@@ -20,6 +20,64 @@ router.get("/", async (req, res) => {
   catch {
     res.sendStatus(500);
   }
+});
+
+/**
+ * Returns an xlsx file that contains the info of 
+ * the existing users in the DB 
+ */
+router.get("/download", async (req, res) => {
+
+  // Get users from DB
+  const usersQuery = await User.findAll()
+  const users = JSON.parse(JSON.stringify(usersQuery))
+
+  // Create excel workbook, where sheets will be stored
+  const workbook = new ExcelJS.Workbook();
+
+  // Create a sheet and assign to it some columns metadata to insert rows
+  const worksheet = workbook.addWorksheet("Lugares de entrega")
+  worksheet.columns = [
+    { header: "ID", key: "id", width: 20 },
+    { header: "Nombre", key: "name", width: 25 },
+    { header: "Fecha de nacimiento", key: "date_B", width: 25 },
+    { header: "Tipo de usuario", key: "type_use", width: 25 },
+    { header: "Correo", key: "e_mail", width: 25 },
+    { header: "Contraseña", key: "pass", width: 30 },
+    { header: "Celular", key: "cel", width: 30 },
+  ]
+
+  // Style each column
+  const idColumn = worksheet.getColumn("id"),
+        nameColumn = worksheet.getColumn("name"),
+        birthdayColumn = worksheet.getColumn("date_B"),
+        userTypeColumn = worksheet.getColumn("type_use"),
+        emailColumn = worksheet.getColumn("e_mail"),
+        passwordColumn = worksheet.getColumn("pass"),
+        cellphoneColumn = worksheet.getColumn("cel");
+
+  const alignment = { horizontal: "center" };
+
+  idColumn.alignment = alignment
+  nameColumn.alignment = alignment
+  birthdayColumn.alignment = alignment
+  userTypeColumn.alignment = alignment
+  emailColumn.alignment = alignment
+  passwordColumn.alignment = alignment
+  cellphoneColumn.alignment = alignment
+
+  // Style header row
+  const headerRow = worksheet.getRow(1)
+  headerRow.font = { bold: true, size: 14 };
+
+  // Add data of every user
+  for (const user of users)
+    worksheet.addRow(user)
+
+  const fileBuffer = await workbook.xlsx.writeBuffer();
+
+  res.attachment("Usuarios.xlsx")
+  res.status(200).end(fileBuffer);
 });
 
 /**
@@ -61,21 +119,6 @@ router.get("/searchByName", async (req, res) => {
     res.sendStatus(404);
   }
 });
-
-const formatCel = (text) => {
-  let temp = text.replace(/[\s-]/g, "");
-
-  let numbers = temp.substring(0,2);
-  let restNumber = temp.substring(2);
-  restNumber = restNumber.match(/.{1,4}/g);
-
-  if(Array.isArray(restNumber))
-    restNumber = restNumber.join("-");
-  
-  if(restNumber != null) numbers = numbers + "-" + restNumber;
-
-  return numbers;
-}
 
 /**
  * Creates a new user in the DB except when there is already
