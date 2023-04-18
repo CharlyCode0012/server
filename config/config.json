@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "ZurdoLikesMagic327",
+    "database": "data_bot",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "ZurdoLikesMagic327",
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "ZurdoLikesMagic327",
+    "database": "data_bot",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
