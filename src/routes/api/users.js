@@ -2,36 +2,63 @@ const router = require("express").Router();
 const { User } = require("../../db/db");
 const { check, validationResult } = require("express-validator");
 const { json } = require("sequelize");
+const { Op } = require("sequelize");
 
-
-
+/**
+ * Retrieves all the users from the DB
+ */
 router.get("/", async (req, res) => {
-  const order = req.query.order || "ASC";
-  try {
-    const users = await User.findAll({ order: [["name", order]] });
-    
-    delete users.createdAt;
-    delete users.updatedAt;
+  const order = req.query.order ?? "ASC"
 
-    return res.json(users);
-  } catch (error) {
-    return res.json({ error });
+  try {
+    const users = await User.findAll({
+      order: [["name", order]]
+    });
+
+    res.json(users);
+  }
+  catch {
+    res.sendStatus(500);
   }
 });
 
-router.get("/getUserByName/:userName", async (req, res) => {
-  const { userName } = req.params;
-  const order = req.query.order || "ASC";
+/**
+ * Returns all the users that match the given ID
+ */
+router.get("/searchByID", async (req, res) => {
+  const { order, search } = req.query
   try {
-    const user = await User.findAll({
-      where: { name: userName },
-      order: [["name", order]],
+    const users = await User.findAll({ 
+      where: { id: search }, 
+      order: [["id", order]]
+    });
+    res.json(users);
+  }
+
+  catch {
+    res.sendStatus(404);
+  }
+
+});
+
+/**
+ * Returns all the users that match the given name
+ */
+router.get("/searchByName", async (req, res) => {
+  const { order, search } = req.query
+  try {
+    const users = await User.findAll({ 
+      where: {
+        name: { [Op.like]: `%${search}%` }
+      },
+      order: [["name", order]]
     });
 
-    if (!user) return res.json({ error: "No se encontro ese usuario" });
-    return res.json(user);
-  } catch (error) {
-    return res.json({ error });
+    res.json(users);
+  }
+
+  catch (error) {
+    res.sendStatus(404);
   }
 });
 
@@ -50,78 +77,56 @@ const formatCel = (text) => {
   return numbers;
 }
 
-router.get("/getUserByCel/:userCel", async (req, res) => {
-  let { userCel } = req.params;
-  userCel = userCel.replace(/[-]/g, "");
-  const {order} = req.query || "ASC"
-  try {
-    /* const user = await User.findAll({
-      where: { cel: userCel },
-    }); */
-
-    const Users= await User.findAll({order:[["name", order]]});
-
-    let users = Users.map((user)=>{
-      user.cel = user.cel.replace(/[-]/g, "");
-      if(user.cel.includes(userCel)){
-        user.cel = formatCel(user.cel);
-        return user;
-      }
-    })
-    users = users.filter(Boolean);
-
-    if (!users) return res.json({ error: "No se encontro ese usuario" });
-    return res.json(users);
-  } catch (error) {
-    return res.json({ error });
-  }
-});
-
+/**
+ * Creates a new user in the DB except when there is already
+ * a user with the given cellphone
+ */
 router.post("/", async (req, res) => {
-  try {
-    const cel = req.body.cel;
+  const cel = req.body.cel;
+  const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
 
-    const exist = await User.findAll({ where: { cel: cel } });
-
-    if (exist.length > 0) {
-      return res.json({ err: true, status: 400, statusText: "Ya hay un usuario con ese numero" });
-    } else {
-      const user = await User.create(req.body);
-      return res.json(user);
-    }
-  } catch (error) {
-    return console.log(json({ error }));
-  }
+  if (cellphoneAlreadyTaken) 
+    return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
+      
+  const user = await User.create(req.body);
+  return res.json(user);
 });
 
+/**
+ * Updates a user in the DB
+ */
 router.put("/:userId", async (req, res) => {
+  // Check if user exists
   const { userId } = req.params;
+  const isFind = await User.findOne({ where: { id: userId } });
 
-  if (!userId) return res.status(404).send("Usuario no encontrado");
-  try {
-    await User.update(req.body, {
-      where: { id: userId },
-    });
+  if (!isFind) return res.status(404).send("Usuario no encontrado");
 
-    return res.json({ success: "Se ha modificado" });
-  } catch (error) {
-    return res.json({ error });
-  }
+  // Check if cellphone repeats
+  const cel = req.body.cel;
+  const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
+
+  if (cellphoneAlreadyTaken) 
+    return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
+
+  // Everything OK, update user
+  await User.update(req.body, {
+    where: { id: userId },
+  });
+  res.json({ success: `se ha modificado ${userId}` });
 });
 
+/**
+ * Deletes a user from the DB
+ */
 router.delete("/:userId", async (req, res) => {
   const { userId } = req.params;
-  if (!userId) return res.status(404).send("Usuario no encontrado");
+  const isFind = await User.findOne({ where: { id: userId } });
 
-  try {
-    await User.destroy({
-      where: { id: userId },
-    });
+  if (!isFind) return res.status(404).send("Usuario no encontrado");
 
-    return res.json({ success: "Se ha eliminado" });
-  } catch (error) {
-    return res.json({ error });
-  }
+  await User.destroy({ where: { id: userId } });
+  res.status(200).send();
 });
 
 router.post(
