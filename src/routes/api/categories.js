@@ -43,7 +43,7 @@ router.get("/download", async (req, res) => {
   worksheet.columns = [
     { header: "ID", key: "id", width: 20 },
     { header: "Nombre", key: "name", width: 25 },
-    { header: "Estado", key: "state", width: 10 },
+    { header: "Estado", key: "state", width: 30 },
   ]
 
   // Style each column
