@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const ExcelJS = require("exceljs")
 
+const upload = require("../../config.js");
 const { PlaceDelivery } = require("../../db/db");
 const { Op } = require("sequelize");
 
@@ -185,6 +186,25 @@ router.get("/searchByCP", async (req, res) => {
 router.post("/", async (req, res) => {
   const place = await PlaceDelivery.create(req.body);
   res.json(place);
+});
+
+/**
+ * Takes an excel file from the request, analices it's data and
+ * - If correct, updates the table 
+ * - If incorrect, returns the corresponding error to the client
+ */
+router.post("/upload", upload.single("excel_file"), async (req, res) => {
+  const file = req.file
+
+  // console.log(file);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(file.path)
+
+  const worksheet = workbook.getWorksheet(1);
+  worksheet.eachRow(function(row, rowNumber) {
+    console.log(`Row ${rowNumber}: ${JSON.stringify(row.values)}`);
+  });
+  res.sendStatus(200);
 });
 
 /**
