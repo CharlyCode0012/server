@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const ExcelJS = require("exceljs")
 
+const upload = require("../../config.js");
 const { PlaceDelivery } = require("../../db/db");
 const { Op } = require("sequelize");
 
@@ -185,6 +186,60 @@ router.get("/searchByCP", async (req, res) => {
 router.post("/", async (req, res) => {
   const place = await PlaceDelivery.create(req.body);
   res.json(place);
+});
+
+/**
+ * Takes an excel file from the request, analices it's data and
+ * - If correct, updates the table 
+ * - If incorrect, returns the corresponding error to the client
+ */
+router.post("/upload", upload.single("excel_file"), async (req, res) => {
+  const file = req.file
+
+  // Create excel info getter
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(file.path)
+  const worksheet = workbook.getWorksheet(1);
+  
+  // Get every place from the excel
+  const places = []
+  worksheet.eachRow(function(row, rowNumber) {
+    if (rowNumber === 1) return
+
+    const [, id, township, street, colony, homeNumber, cp, openingHour, closingHour ] = row.values
+
+    places.push({
+      id,
+      name: township,
+      address: `${colony}. ${street}. ${homeNumber}`,
+      cp: cp,
+      open_h: openingHour,
+      close_h: closingHour,
+    })
+  });
+
+  // BUG: If validation is needed, it should go here
+
+  // For every place, add it if ID not found, or update it if found
+  for (const place of places) {
+    
+    if (place.id !== undefined) // Place indeed exists, update its info
+      await PlaceDelivery.update(place, {
+        where: { id: place.id },
+      });
+
+    else // Place didn't exist, create a new one
+      await PlaceDelivery.create({ 
+        id: Date.now().toString(),
+        name: place.name, 
+        address: place.address,
+        cp: place.cp,
+        open_h: place.open_h,
+        close_h: place.close_h
+      });
+  }
+
+  res.sendStatus(200);
 });
 
 /**
