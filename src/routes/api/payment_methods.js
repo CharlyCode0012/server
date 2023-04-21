@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const ExcelJS = require("exceljs")
 
+const upload = require("../../config.js");
 const { Payment } = require("../../db/db");
 const { Op } = require("sequelize");
 
@@ -187,6 +188,60 @@ router.get("/searchByBank", async (req, res) => {
 router.post("/", async (req, res) => {
   const paymentMethod = await Payment.create(req.body);
   res.json(paymentMethod);
+});
+
+/**
+ * Takes an excel file from the request, analices it's data and
+ * - If correct, updates the table 
+ * - If incorrect, returns the corresponding error to the client
+ */
+router.post("/upload", upload.single("excel_file"), async (req, res) => {
+  const file = req.file
+
+  // Create excel info getter
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(file.path)
+  const worksheet = workbook.getWorksheet(1);
+  
+  // Get every paymentMethod from the excel
+  const paymentMethods = []
+  worksheet.eachRow(function(row, rowNumber) {
+    if (rowNumber === 1) return
+
+    const [, id, owner, clabe, cardNumber, bank, subsidary] = row.values
+
+    paymentMethods.push({
+      id,
+      name: owner,
+      CLABE: clabe,
+      no_card: cardNumber,
+      bank,
+      subsidary,
+    })
+  });
+
+  // BUG: If validation is needed, it should go here
+  
+  // For every payment method, add it if ID not found, or update it if found
+  for (const paymentMethod of paymentMethods) {
+    
+    if (paymentMethod.id !== undefined) // Method indeed exists, update its info
+      await Payment.update(paymentMethod, {
+        where: { id: paymentMethod.id },
+      });
+
+    else // Method didn't exist, create a new one
+      await Payment.create({ 
+        id: Date.now().toString(),
+        name: paymentMethod.name, 
+        CLABE: paymentMethod.CLABE,
+        no_card: paymentMethod.no_card,
+        bank: paymentMethod.bank,
+        subsidary: paymentMethod.subsidary
+      });
+  }
+
+  res.sendStatus(200);
 });
 
 /**
