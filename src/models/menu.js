@@ -1,17 +1,23 @@
 module.exports = (sequelize, type) =>{
-    return sequelize.define('menu', {
+    return sequelize.define('menus', {
         id:{
             type: type.STRING(50),
             primaryKey: true,
             autoIncrement: false
         },
 
-        option_key:{
-            type: type.STRING(100),
+        instruction:{
+            type: type.STRING(300),
         },
 
-        keywords: {
-            type: type.STRING(100),
+        option: {
+            type: type.STRING(50),
+            references: {
+                model: 'menu_options',
+                key: 'id'
+            },
+            onDelete: 'cascade',
+            allowNull: true
         }
     })
 }
