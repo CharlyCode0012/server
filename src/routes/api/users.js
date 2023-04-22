@@ -136,6 +136,34 @@ router.post("/", async (req, res) => {
 });
 
 /**
+ * Updates the password and cellphone of a user who updated
+ * them in their profile
+ */
+router.put("/updateProfile", async (req, res) => {
+    // Check if user exists
+    const userId = req.body.id;
+    const isFind = await User.findOne({ where: { id: userId } });
+  
+    if (!isFind) return res.status(404).send("Usuario no encontrado");
+  
+    // Check if cellphone repeats
+    const cel = req.body.cel;
+    const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
+  
+    if (cellphoneAlreadyTaken) 
+      return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
+  
+    // Everything OK, update user
+    await User.update({
+      pass: req.body.pass,
+      cel: req.body.cel,
+    }, {
+      where: { id: userId },
+    });
+    res.json({ success: `se ha modificado ${userId}` });
+})
+
+/**
  * Updates a user in the DB
  */
 router.put("/:userId", async (req, res) => {
