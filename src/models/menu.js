@@ -6,6 +6,10 @@ module.exports = (sequelize, type) =>{
             autoIncrement: false
         },
 
+        title:{
+            type: type.STRING(50),
+        },
+
         instruction:{
             type: type.STRING(300),
         },
