@@ -6,7 +6,7 @@ const { Product, CatalogProduct, CategoryProd } = require("../../db/db");
 router.get("/", async (req, res) => {
   try {
 
-  const {idCatalog} = req.query || '';
+ /*  //const {idCatalog} = req.query || '';
 
   const c_products = await CatalogProduct.findAll({where: {id_catalog: idCatalog}});
   let products = [];
@@ -19,7 +19,8 @@ router.get("/", async (req, res) => {
       } 
     }));
     
-  }
+  } */
+  const products = await Product.findAll();
   
    res.json(products);
   } catch (error) {
