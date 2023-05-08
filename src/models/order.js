@@ -18,6 +18,11 @@ module.exports = (sequelize, type) => {
       type: type.DOUBLE,
     },
 
+    amount: {
+      type: type.DOUBLE,
+    },
+
+
     state: {
       type: type.ENUM("Pagado", "Abonado", "NA"),
     },
