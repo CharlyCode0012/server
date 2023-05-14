@@ -1,28 +1,36 @@
 const router = require("express").Router();
 const { QueryTypes } = require('sequelize');
 
-const { Product, CatalogProduct, CategoryProd } = require("../../db/db");
+const { sequelize, Product, CatalogProduct, CategoryProd } = require("../../db/db");
 
 router.get("/", async (req, res) => {
+  const order = req.query.order ?? "ASC"
+  const catalogId = req.query.idCatalog.toString() ?? "";
+  let products;
   try {
 
- /*  //const {idCatalog} = req.query || '';
+     // Remplaza con la id del catálogo que deseas obtener
+    if(catalogId !== ""){
 
-  const c_products = await CatalogProduct.findAll({where: {id_catalog: idCatalog}});
-  let products = [];
-  if(idCatalog!== ''){
-    products.push(c_products.map( async(el)=>{
-      try {
-        return await Product.findOne({where: {id: el.id_product}});
-      } catch (error) {
-        return error;
-      } 
-    }));
-    
-  } */
-  const products = await Product.findAll();
+        products = await sequelize.query(`
+          SELECT p.*
+          FROM products p
+          INNER JOIN catalog_products cp ON cp.id_product = p.id
+          INNER JOIN catalogs c ON c.id = cp.id_catalog
+          WHERE c.id = :catalogId
+      `, {
+          replacements: { catalogId },
+          type: QueryTypes.SELECT,
+          model: Product,
+          mapToModel: true,
+      });
+    }
+    else{
+      products = [];
+    }
+  //const products = await Product.findAll();
   
-   res.json(products);
+   res.json(catalogId);
   } catch (error) {
     res.json(error);
   }
