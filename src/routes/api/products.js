@@ -1,36 +1,38 @@
 const router = require("express").Router();
 const { QueryTypes } = require('sequelize');
 
-const { sequelize, Product, CatalogProduct, CategoryProd } = require("../../db/db");
+const {conn, Product, CatalogProduct, CategoryProd, Catalog } = require("../../db/db");
+
+Catalog.belongsToMany(Product, { through: CatalogProduct });
+Product.belongsToMany(Catalog, { through: CatalogProduct });
 
 router.get("/", async (req, res) => {
   const order = req.query.order ?? "ASC"
-  const catalogId = req.query.idCatalog.toString() ?? "";
+  const catalogId = req.query.catalogId ?? "";
   let products;
   try {
 
      // Remplaza con la id del catálogo que deseas obtener
     if(catalogId !== ""){
 
-        products = await sequelize.query(`
+        products = await conn.query(`
           SELECT p.*
           FROM products p
           INNER JOIN catalog_products cp ON cp.id_product = p.id
           INNER JOIN catalogs c ON c.id = cp.id_catalog
           WHERE c.id = :catalogId
+          ORDER BY p.name ASC
       `, {
           replacements: { catalogId },
           type: QueryTypes.SELECT,
-          model: Product,
-          mapToModel: true,
       });
     }
+ 
     else{
       products = [];
     }
   //const products = await Product.findAll();
-  
-   res.json(catalogId);
+   res.json(products);
   } catch (error) {
     res.json(error);
   }
@@ -72,7 +74,7 @@ router.delete("/:productId", async (req, res) => {
     await Product.destroy({
       where:{ id: productId}
     });
-    res.json({success: 'Se ha eliminado'})
+    res.status(200).send();
   });
 
 module.exports = router;

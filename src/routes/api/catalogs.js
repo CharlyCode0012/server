@@ -88,6 +88,7 @@ router.delete('/:catalogId', async (req, res)=>{
     if (!isFind) return res.status(404).send("Catalogo no encontrado");
 
     await Catalog.destroy({where: {id: catalogId}});
+    res.status(200).send();
 })
 
 module.exports = router;

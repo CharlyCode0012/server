@@ -68,6 +68,7 @@ conn.sync({ force: false }).then(() => {
 });
 
 module.exports = {
+  conn,
   Answer,
   Catalog,
   CatalogProduct,
