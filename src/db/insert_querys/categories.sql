@@ -1,4 +1,4 @@
-INSERT INTO categories (id, name, state, createdAt, updatedAt)
+INSERT INTO categories (id, category_name, state, createdAt, updatedAt)
 VALUES 
     ('1', 'Ropa para mujer', 1, NOW(), NOW()),
     ('2', 'Ropa para hombre', 1, NOW(), NOW()),

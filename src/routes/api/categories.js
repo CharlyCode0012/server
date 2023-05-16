@@ -2,7 +2,6 @@ const router = require("express").Router();
 const ExcelJS = require("exceljs")
 
 const { Category } = require("../../db/db");
-const { defaultResponse } = require("../../models/defaultResponse/defaultResponse");
 
 router.get("/", async (req, res) => {
   const order = req.query.order || "ASC";
@@ -11,9 +10,6 @@ router.get("/", async (req, res) => {
       order: [["name", order]],
     });
 
-    if(categories === undefined || categories.length == 0){
-      categories = defaultResponse;
-    }
 
     res.json(categories);
   } catch (error) {

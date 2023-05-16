@@ -6,8 +6,11 @@ module.exports = (sequelize, type) =>{
             primaryKey: true,
             autoIncrement: false
         },
-        name:{
+        product_name:{
             type: type.STRING(120),
+        },
+        description: {
+            type: type.STRING(200),
         },
         key_word:{
             type: type.STRING(80),
