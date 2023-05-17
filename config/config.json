@@ -1,21 +1,21 @@
 {
   "development": {
     "username": "root",
-    "password": "ZurdoLikesMagic327",
+    "password": "0906Gean.0906",
     "database": "data_bot",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
   "test": {
     "username": "root",
-    "password": "ZurdoLikesMagic327",
-    "database": "database_test",
+    "password": "0906Gean.0906",
+    "database": "data_bot",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
   "production": {
     "username": "root",
-    "password": "ZurdoLikesMagic327",
+    "password": "0906Gean.0906",
     "database": "data_bot",
     "host": "127.0.0.1",
     "dialect": "mysql"
