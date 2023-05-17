@@ -2,8 +2,8 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  up: (queryInterface, Sequelize) => {
-    return queryInterface.addColumn('products', 'description', {
+  async up (queryInterface, Sequelize) {
+    await queryInterface.addColumn('products', 'description', {
       type: Sequelize.STRING, 
       allowNull: true, // Define si el campo permite valores nulos o no
       defaultValue: '' // Define el valor por defecto del nuevo campo (opcional)
@@ -11,11 +11,6 @@ module.exports = {
   },
 
   async down (queryInterface, Sequelize) {
-    /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
+    await queryInterface.addColumn('products', 'description')
   }
 };
