@@ -7,7 +7,7 @@ router.get("/", async (req, res) => {
   const order = req.query.order || "ASC";
   try {
     let categories = await Category.findAll({
-      order: [["name", order]],
+      order: [["category_name", order]],
     });
 
 
@@ -27,7 +27,7 @@ router.get("/download", async (req, res) => {
   const categoriesQuery = await Category.findAll()
   const categories = JSON.parse(JSON.stringify(categoriesQuery)).map(category => ({
     "id": category.id,
-    "name": category.name,
+    "category_name": category.name,
     "state": category.state
   }))
 
@@ -38,7 +38,7 @@ router.get("/download", async (req, res) => {
   const worksheet = workbook.addWorksheet("Lista de Categorias")
   worksheet.columns = [
     { header: "ID", key: "id", width: 20 },
-    { header: "Nombre", key: "name", width: 25 },
+    { header: "Nombre", key: "category_name", width: 25 },
     { header: "Estado", key: "state", width: 30 },
   ]
 
@@ -70,7 +70,7 @@ router.get("/categoryByState/:categoryState", async (req, res) => {
   try {
     const category = await Category.findAll({
       where: { state: categoryState },
-      order: [["name", order]],
+      order: [["category_name", order]],
     });
     res.json(category);
   } catch (error) {
@@ -84,8 +84,8 @@ router.get("/categoryByName/:categoryName", async (req, res) => {
 
   try {
     const category = await Category.findAll({
-      where: { name: categoryName },
-      order: [["name", order]],
+      where: { category_name: categoryName },
+      order: [["category_name", order]],
     });
     res.json(category);
   } catch (error) {

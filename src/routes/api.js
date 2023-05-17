@@ -18,6 +18,7 @@ const apiQuestionRouter = require('./api/questions');
 const apiShoppingRouter = require('./api/shoppings');
 const apiSoldProdRouter = require('./api/sold_products');
 const apiUsersRouter = require('./api/users');
+const apiImageRouter = require('./api/images');
 
 
 router.use('/answers', apiAnswersRouter);
@@ -36,5 +37,6 @@ router.use('/questions', apiQuestionRouter);
 router.use('/shoppings', apiShoppingRouter);
 router.use('/sold_products', apiSoldProdRouter);
 router.use('/users', apiUsersRouter);
+router.use('/images', apiImageRouter);
 
 module.exports = router;

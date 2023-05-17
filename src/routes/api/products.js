@@ -1,7 +1,9 @@
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const { QueryTypes } = require('sequelize');
 
 const {conn, Product, CatalogProduct, CategoryProd, Catalog } = require("../../db/db");
+
 
 Catalog.belongsToMany(Product, { through: CatalogProduct });
 Product.belongsToMany(Catalog, { through: CatalogProduct });
@@ -15,24 +17,42 @@ router.get("/", async (req, res) => {
      // Remplaza con la id del catálogo que deseas obtener
     if(catalogId !== ""){
 
-        products = await conn.query(`
-          SELECT p.*
-          FROM products p
-          INNER JOIN catalog_products cp ON cp.id_product = p.id
-          INNER JOIN catalogs c ON c.id = cp.id_catalog
-          WHERE c.id = :catalogId
-          ORDER BY p.name ASC
+      products = await conn.query(`
+        SELECT p.*
+        FROM products p
+        INNER JOIN catalog_products cp ON cp.id_product = p.id
+        INNER JOIN catalogs c ON c.id = cp.id_catalog
+        WHERE c.id = :catalogId
+        ORDER BY p.product_name ASC
       `, {
-          replacements: { catalogId },
-          type: QueryTypes.SELECT,
+        replacements: { catalogId },
+        type: QueryTypes.SELECT,
+      });
+  
+      const productsWithCategories = await conn.query(`
+        SELECT p.*, cat.category_name AS category_name, cat.id AS id_category
+        FROM products p
+        LEFT JOIN categories_products cp ON cp.id_product = p.id
+        LEFT JOIN categories cat ON cat.id = cp.id_category
+        WHERE p.id IN (${products.map(p => p.id).join(',')})
+      `, { type: QueryTypes.SELECT });
+  
+  // Agregar información de categoría a los productos existentes
+      products.forEach(p => {
+        const matchingProduct = productsWithCategories.find(pc => pc.id === p.id);
+        if (matchingProduct) {
+          p.category_name = matchingProduct.category_name;
+          p.id_category = matchingProduct.id_category;
+        } else {
+          p.category_name = "";
+          p.id_category = "";
+        }
       });
     }
- 
     else{
       products = [];
     }
-  //const products = await Product.findAll();
-   res.json(products);
+    res.json(products);
   } catch (error) {
     res.json(error);
   }
