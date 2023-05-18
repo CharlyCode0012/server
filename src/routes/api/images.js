@@ -9,17 +9,24 @@ const PATH_IMG_PRODUCT = 'uploads/img/products';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, PATH_IMG_PRODUCT);
+    cb(null, 'src/routes/api/uploads/img/products');
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const fileName = file.originalname;
+    const lastDotIndex = fileName.lastIndexOf('.');
+    //const name = fileName.slice(0, lastDotIndex);
+    const extension = fileName.slice(lastDotIndex + 1);
+    const id = req.query.id_product ?? Date.now();
+    const name = `${id}.${extension}`;
+
+    cb(null, name);
   }
 });
 
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
 
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
@@ -31,17 +38,9 @@ const upload = multer({
 
 // Ruta para cargar imágenes
 router.post("/", upload.single("image"), async (req, res) => {
-  const { path: imagePath, destination, filename } = req.file;
-  const resizedImagePath = path.join(destination, "resized", filename);
+  const { id_product } = req.query;
 
-  try {
-    // Redimensionar la imagen a 500x500 píxeles y guardarla
-    await sharp(imagePath).resize(160, 160).toFile(resizedImagePath);
-
-    res.json({ success: true });
-  } catch (error) {
-    res.json({ success: false, error: "Error al redimensionar la imagen" });
-  }
+  res.json({image_url: id_product});
 });
 
 // Ruta para entregar imágenes
@@ -49,7 +48,6 @@ router.get("/:imageName", (req, res) => {
   const { imageName } = req.params;
   const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, imageName).concat('.jpg');
 
-  console.log(imagePath);
 
   // Verificar si el archivo existe
   if (fs.existsSync(imagePath)) {
