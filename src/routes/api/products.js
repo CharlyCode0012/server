@@ -61,7 +61,7 @@ router.get("/", async (req, res) => {
 });
 
 router.get('/getByKeyWord/:keyWord', async (req, res) =>{
-  const {productId} = req.params;
+  const { productId } = req.query;
 
   const product = await Product.findAll({
     where: {id: productId}
@@ -73,28 +73,66 @@ router.get('/getByKeyWord/:keyWord', async (req, res) =>{
 })
 
 router.post("/", async (req, res) => {
-  const product = await Product.create(req.body);
-  res.json(product);
+  const { categoryId, catalogId } = req.query;
+
+
+  try {
+    const product = await Product.create(req.body);
+    const productId = product.id;
+  
+    await CatalogProduct.create({ id_product: productId, id_catalog: catalogId });
+    await CategoryProd.create({ id_product: productId, id_catalog: categoryId });
+  
+    res.json(product);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Ocurrió un error al crear al producto' });
+  }
 });
 
 router.put("/:productId", async (req, res) => {
+  const { categoryId } = req.query;
   const { productId } = req.params;
-  if (!productId) return res.status(404).send("Producto no encontrado");
 
-  await Product.update(req.body, {
-    where:{ id: productId}
-  });
-  res.json({success: 'Se ha modificado'})
+  
+  try {
+    if (!productId) return res.status(404).send("Producto no encontrado");
+
+    await Product.update(req.body, {
+      where:{ id: productId}
+    });
+
+    const isFind = await CategoryProd.findOne({ where: {id_product: productId }})
+
+  if(isFind){
+    await CategoryProd.update({ id_category: categoryId }, {
+      where: { id_product: productId }
+    }) 
+  }
+  else await CategoryProd.create({ id_product: productId, id_category: categoryId});
+
+  res.json({success: 'Se ha modificado'});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Ocurrió un error al actualizar el producto' });
+  }
 });
 
 router.delete("/:productId", async (req, res) => {
     const { productId } = req.params;
-    if (!productId) return res.status(404).send("Producto no encontrado");
+    try {
+      if (!productId) return res.status(404).send("Producto no encontrado");
   
-    await Product.destroy({
-      where:{ id: productId}
-    });
-    res.status(200).send();
+      await Product.destroy({
+        where:{ id: productId}
+      });
+
+      res.status(200).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Ocurrió un error al eliminar el producto' });
+    }
+    
   });
 
 module.exports = router;
