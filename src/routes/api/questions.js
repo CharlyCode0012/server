@@ -3,7 +3,7 @@ const router = require('express').Router();
 const {Question} = require('../../db/db');
 
 router.get('/', async (req, res)=>{
-    const questions = await Question.findAll();
+    const questions = await Question.findAll({where: {state: 0}});
     res.json(questions);
 });
 
