@@ -7,9 +7,9 @@ const catalogProductModel = require("../models/catalog_product");
 const categoryModel = require("../models/category");
 const categoryProdModel = require("../models/categories_product");
 const clientModel = require("../models/client");
-const menuModel = require("../models/menu");
+const responseModel = require("../models/response");
+const intialModel = require("../models/initial");
 const menuOptionsModel = require("../models/menu_options");
-const menuResModel = require("../models/menu_response");
 const orderModel = require("../models/order");
 const orderDetailModel = require("../models/order_detail");
 const paymentModel = require("../models/payment_method");
@@ -49,9 +49,9 @@ const CatalogProduct = catalogProductModel(conn, Sequelize);
 const Category = categoryModel(conn, Sequelize);
 const CategoryProd = categoryProdModel(conn, Sequelize);
 const Client = clientModel(conn, Sequelize);
-const Menu = menuModel(conn, Sequelize);
+const Response = responseModel(conn, Sequelize);
+const Initial = intialModel(conn, Sequelize);
 const MenuOptions = menuOptionsModel(conn, Sequelize);
-const MenuRes = menuResModel(conn, Sequelize);
 const Order = orderModel(conn, Sequelize);
 const OrderDetails = orderDetailModel(conn, Sequelize);
 const Payment = paymentModel(conn, Sequelize);
@@ -76,9 +76,9 @@ module.exports = {
   CategoryProd,
   Client,
   Delivery,
-  Menu,
+  Initial,
   MenuOptions,
-  MenuRes,
+  Response,
   Order,
   OrderDetails,
   Payment,

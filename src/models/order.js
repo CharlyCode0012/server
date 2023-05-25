@@ -11,7 +11,7 @@ module.exports = (sequelize, type) => {
     },
 
     date_order: {
-      type: type.DATEONLY,
+      type: type.DATEONLY
     },
 
     total: {

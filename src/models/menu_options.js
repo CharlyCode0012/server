@@ -29,8 +29,8 @@ module.exports = (sequelize, type) =>{
 		menu:{
 			type: type.STRING(50),
 			references: {
-				model: 'menus',
-				key: 'id'
+				model: 'initials',
+				key: 'option_key'
 			},
 			onDelete: 'cascade',
 			allowNull: false

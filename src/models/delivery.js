@@ -21,25 +21,7 @@ module.exports = (sequelize, type) =>{
         state:{
             type: type.BOOLEAN
         },
-
-        id_client:{
-            type: type.STRING(20),
-            references: {
-                model:'clients',
-                key: 'number'
-            },
-            onDelete: 'cascade',
-        },
-
-        id_place:{
-            type: type.STRING(50),
-            references: {
-                model:'places_deliveries',
-                key: 'id'
-            },
-            onDelete: 'cascade',
-        },
-
+        
         id_order:{
             type: type.INTEGER,
             references: {
