@@ -13,7 +13,9 @@ module.exports = (sequelize, type) => {
     date_order: {
       type: type.DATEONLY
     },
-
+    date_delivery: {
+      type: type.DATEONLY
+    },
     total: {
       type: type.DOUBLE,
     },

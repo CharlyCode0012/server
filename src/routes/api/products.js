@@ -24,9 +24,9 @@ router.get("/", async (req, res) => {
         LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
         LEFT JOIN categories cat ON cat.id = cp2.id_category
         WHERE c.id = :catalogId
-        ORDER BY p.product_name ASC
+        ORDER BY p.product_name ${order}
       `, {
-        replacements: { catalogId },
+        replacements: { catalogId, order },
         type: QueryTypes.SELECT,
       });
     } else {
