@@ -1,47 +1,41 @@
 const router = require('express').Router();
 
-const {Delivery, Order} = require('../../db/db');
+const { QueryTypes } = require('sequelize');
+const {Delivery, Order, conn} = require('../../db/db');
 
 router.get('/', async (req, res)=>{
 
     try {
-        const deliveries = await Delivery.findAll();
+        const deliveries = await conn.query(
+            `
+            SELECT deliveries.*, orders.state as order_state, products.key_word
+            FROM deliveries
+            INNER JOIN orders ON deliveries.id_order = orders.id
+            INNER JOIN products ON deliveries.id_product = products.id
+            `,
+            { type: QueryTypes.SELECT }
+        );
+        
+        const arrayDeliveries = deliveries.map((delivery) => {
+            if (delivery.date_delivery === null) {
+                return null;
+            }
 
-        const ordersIDS =  deliveries.map(( delivery ) => {
-            return delivery.id_order;
-        });
-
-        const deliveriesRes = ordersIDS.map( async ( orderID, index ) => {
-
-            const { state: order_state } = await Order.findOne({where: {id: orderID}});
-            
-            const obj = deliveries[index].dataValues.date_delivery === null ? null : {
-                id: deliveries[index].dataValues.id,
-                folio: deliveries[index].dataValues.folio,
-                date_delivery: deliveries[index].dataValues.date_delivery,
-                rest: deliveries[index].dataValues.rest,
-                state: deliveries[index].dataValues.state,
-                id_order: deliveries[index].dataValues.id_order,
-                order_state,
-                createdAt: deliveries[index].dataValues.createdAt,
-                updatedAt: deliveries[index].dataValues.updatedAt,
+            return {
+                id: delivery.id,
+                folio: delivery.folio,
+                date_delivery: delivery.date_delivery,
+                rest: delivery.rest,
+                state: delivery.state,
+                id_order: delivery.id_order,
+                order_state: delivery.order_state,
+                createdAt: delivery.createdAt,
+                updatedAt: delivery.updatedAt,
+                key_word: delivery.key_word,
             };
-
-            return obj;
-
         });
-        
-        Promise.all(deliveriesRes)
-        .then((resolvedDeliveries) => {
-            const arrayDeliveries = resolvedDeliveries.filter(Boolean);
-            res.json(arrayDeliveries);
-        })
-        .catch((error) => {
-            console.log(error);
-            res.send(error);
-        });
-        
 
+        res.json(arrayDeliveries.filter(Boolean));
     } catch (error) {
         res.send(error);
     }

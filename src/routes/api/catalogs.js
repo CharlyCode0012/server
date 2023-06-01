@@ -4,8 +4,12 @@ const ExcelJS = require("exceljs")
 const {Catalog} = require('../../db/db');
 
 router.get('/', async (req, res)=>{
+  try {
     const catalogs = await Catalog.findAll();
     res.json(catalogs);
+  } catch (error) {
+    res.status(400).send("Error al traer los datos");
+  }
 });
 
 
@@ -16,6 +20,7 @@ router.get('/', async (req, res)=>{
  */
 router.get("/download", async (req, res) => {
 
+  try {
     // Get categories from DB
     const catalogsQuery = await Catalog.findAll()
     const categories = JSON.parse(JSON.stringify(catalogsQuery)).map(catalog=> ({
@@ -55,40 +60,50 @@ router.get("/download", async (req, res) => {
     res.setHeader('content-disposition', 'attachment; filename="Catalogos.xlsx"');
     res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
     res.status(200).end(fileBuffer);
+  } catch (error) {
+    res.status(400).send("Error al descargar");
+  }
   });
 
-router.get('/:catalogId', async (req, res)=>{
-    const {catalogId} = req.params;
-    const catalog = await Catalog.findAll({where: {id: catalogId}});
-
-    res.json(catalog);
-});
-
 router.post('/', async (req, res)=>{
+  try {
     const catalog = await Catalog.create(req.body);
     res.json(catalog);
+  } catch (error) {
+    res.status(400).send("Error al crear");
+  }
 });
 
 router.put('/:catalogId', async (req, res)=>{
     const {catalogId} = req.params;
-    const isFind = await Catalog.findOne({where: {id: catalogId}});
 
-    if (!isFind) return res.status(404).send("Catalogo no encontrado");
-
-     await Catalog.update(req.body, {
-        where: {id: catalogId}
-    });
-    res.json({success: `se ha modificado ${catalogId}`});
+    try {
+      const isFind = await Catalog.findOne({where: {id: catalogId}});
+  
+      if (!isFind) return res.status(404).send("Catalogo no encontrado");
+  
+      await Catalog.update(req.body, {
+          where: {id: catalogId}
+      });
+      res.json({success: `se ha modificado ${catalogId}`});
+    } catch (error) {
+      res.status(400).send("Error al actualizar");
+    }
 })
 
 router.delete('/:catalogId', async (req, res)=>{
     const {catalogId} = req.params;
-    const isFind = await Catalog.findOne({where: {id: catalogId}});
-    
-    if (!isFind) return res.status(404).send("Catalogo no encontrado");
 
-    await Catalog.destroy({where: {id: catalogId}});
-    res.status(200).send();
+    try {
+      const isFind = await Catalog.findOne({where: {id: catalogId}});
+      
+      if (!isFind) return res.status(404).send("Catalogo no encontrado");
+  
+      await Catalog.destroy({where: {id: catalogId}});
+      res.status(200).send();
+    } catch (error) {
+      res.status(400).send("Error al eliminar");
+    }
 })
 
 module.exports = router;

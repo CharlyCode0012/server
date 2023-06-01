@@ -29,73 +29,78 @@ router.get("/", async (req, res) => {
  */
 router.get("/download", async (req, res) => {
 
-  // Get places from DB
-  const placesQuery = await PlaceDelivery.findAll()
-  const places = JSON.parse(JSON.stringify(placesQuery)).map(place => {
+  try {
+    
+    // Get places from DB
+    const placesQuery = await PlaceDelivery.findAll()
+    const places = JSON.parse(JSON.stringify(placesQuery)).map(place => {
     const [colony, street, homeNumber] = place.address.split(". ");
-
-    return {
-      id: place.id,
-      township: place.name,
-      street,
-      colony,
-      homeNumber,
-      cp: place.cp,
-      openingHour: place.open_h,
-      closingHour: place.close_h
-    };
-  });
-
-  // Create excel workbook, where sheets will be stored
-  const workbook = new ExcelJS.Workbook();
-
-  // Create a sheet and assign to it some columns metadata to insert rows
-  const worksheet = workbook.addWorksheet("Lugares de entrega")
-  worksheet.columns = [
-    { header: "ID", key: "id", width: 20 },
-    { header: "Municipio", key: "township", width: 25 },
-    { header: "Calle", key: "street", width: 25 },
-    { header: "Colonia", key: "colony", width: 25 },
-    { header: "No. de Casa", key: "homeNumber", width: 25 },
-    { header: "C. P.", key: "cp", width: 25 },
-    { header: "Hora de apertura", key: "openingHour", width: 25 },
-    { header: "Hora de cierre", key: "closingHour", width: 25 },
-  ]
-
-  // Style each column
-  const idColumn = worksheet.getColumn("id"),
-        townshipColumn = worksheet.getColumn("township"),
-        streetColumn = worksheet.getColumn("street"),
-        colonyColumn = worksheet.getColumn("colony"),
-        homeNumberColumn = worksheet.getColumn("homeNumber"),
-        cpColumn = worksheet.getColumn("cp"),
-        openingHourColumn = worksheet.getColumn("openingHour"),
-        closingHourColumn = worksheet.getColumn("closingHour");
-
-  const alignment = { horizontal: "center" };
-
-  idColumn.alignment = alignment
-  townshipColumn.alignment = alignment
-  streetColumn.alignment = alignment
-  colonyColumn.alignment = alignment
-  homeNumberColumn.alignment = alignment
-  cpColumn.alignment = alignment
-  openingHourColumn.alignment = alignment
-  closingHourColumn.alignment = alignment
-
-  // Style header row
-  const headerRow = worksheet.getRow(1)
-  headerRow.font = { bold: true, size: 14 };
-
-  // Add data of every place
-  for (const place of places)
-    worksheet.addRow(place)
-
-  const fileBuffer = await workbook.xlsx.writeBuffer();
-
-  res.setHeader('content-disposition', 'attachment; filename="Lugares de entrega.xlsx"');
-  res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
-  res.status(200).end(fileBuffer);
+  
+      return {
+        id: place.id,
+        township: place.name,
+        street,
+        colony,
+        homeNumber,
+        cp: place.cp,
+        openingHour: place.open_h,
+        closingHour: place.close_h
+      };
+    });
+  
+    // Create excel workbook, where sheets will be stored
+    const workbook = new ExcelJS.Workbook();
+  
+    // Create a sheet and assign to it some columns metadata to insert rows
+    const worksheet = workbook.addWorksheet("Lugares de entrega")
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 20 },
+      { header: "Municipio", key: "township", width: 25 },
+      { header: "Calle", key: "street", width: 25 },
+      { header: "Colonia", key: "colony", width: 25 },
+      { header: "No. de Casa", key: "homeNumber", width: 25 },
+      { header: "C. P.", key: "cp", width: 25 },
+      { header: "Hora de apertura", key: "openingHour", width: 25 },
+      { header: "Hora de cierre", key: "closingHour", width: 25 },
+    ]
+  
+    // Style each column
+    const idColumn = worksheet.getColumn("id"),
+          townshipColumn = worksheet.getColumn("township"),
+          streetColumn = worksheet.getColumn("street"),
+          colonyColumn = worksheet.getColumn("colony"),
+          homeNumberColumn = worksheet.getColumn("homeNumber"),
+          cpColumn = worksheet.getColumn("cp"),
+          openingHourColumn = worksheet.getColumn("openingHour"),
+          closingHourColumn = worksheet.getColumn("closingHour");
+  
+    const alignment = { horizontal: "center" };
+  
+    idColumn.alignment = alignment
+    townshipColumn.alignment = alignment
+    streetColumn.alignment = alignment
+    colonyColumn.alignment = alignment
+    homeNumberColumn.alignment = alignment
+    cpColumn.alignment = alignment
+    openingHourColumn.alignment = alignment
+    closingHourColumn.alignment = alignment
+  
+    // Style header row
+    const headerRow = worksheet.getRow(1)
+    headerRow.font = { bold: true, size: 14 };
+  
+    // Add data of every place
+    for (const place of places)
+      worksheet.addRow(place)
+  
+    const fileBuffer = await workbook.xlsx.writeBuffer();
+  
+    res.setHeader('content-disposition', 'attachment; filename="Lugares de entrega.xlsx"');
+    res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
+    res.status(200).end(fileBuffer);
+  } catch (error) {
+    res.status(400).send("Error");
+  }
 });
 
 /**
@@ -184,8 +189,13 @@ router.get("/searchByCP", async (req, res) => {
  * Creates a new place in the DB
  */
 router.post("/", async (req, res) => {
-  const place = await PlaceDelivery.create(req.body);
-  res.json(place);
+  try {
+    const place = await PlaceDelivery.create(req.body);
+    res.json(place);
+    
+  } catch (error) {
+    res.status(400).send("Error al crear");
+  }
 });
 
 /**
@@ -196,50 +206,55 @@ router.post("/", async (req, res) => {
 router.post("/upload", upload.single("excel_file"), async (req, res) => {
   const file = req.file
 
-  // Create excel info getter
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(file.path)
-  const worksheet = workbook.getWorksheet(1);
-  
-  // Get every place from the excel
-  const places = []
-  worksheet.eachRow(function(row, rowNumber) {
-    if (rowNumber === 1) return
-
-    const [, id, township, street, colony, homeNumber, cp, openingHour, closingHour ] = row.values
-
-    places.push({
-      id,
-      name: township,
-      address: `${colony}. ${street}. ${homeNumber}`,
-      cp: cp,
-      open_h: openingHour,
-      close_h: closingHour,
-    })
-  });
-
-  // BUG: If validation is needed, it should go here
-
-  // For every place, add it if ID not found, or update it if found
-  for (const place of places) {
+  try {
+    // Create excel info getter
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(file.path)
+    const worksheet = workbook.getWorksheet(1);
     
-    if (place.id !== undefined) // Place indeed exists, update its info
-      await PlaceDelivery.update(place, {
-        where: { id: place.id },
-      });
-
-    else // Place didn't exist, create a new one
-      await PlaceDelivery.create({ 
-        id: Date.now().toString(),
-        name: place.name, 
-        address: place.address,
-        cp: place.cp,
-        open_h: place.open_h,
-        close_h: place.close_h
-      });
+    // Get every place from the excel
+    const places = []
+    worksheet.eachRow(function(row, rowNumber) {
+      if (rowNumber === 1) return
+  
+      const [, id, township, street, colony, homeNumber, cp, openingHour, closingHour ] = row.values
+  
+      places.push({
+        id,
+        name: township,
+        address: `${colony}. ${street}. ${homeNumber}`,
+        cp: cp,
+        open_h: openingHour,
+        close_h: closingHour,
+      })
+    });
+  
+    // BUG: If validation is needed, it should go here
+  
+    // For every place, add it if ID not found, or update it if found
+    for (const place of places) {
+      
+      if (place.id !== undefined) // Place indeed exists, update its info
+        await PlaceDelivery.update(place, {
+          where: { id: place.id },
+        });
+  
+      else // Place didn't exist, create a new one
+        await PlaceDelivery.create({ 
+          id: Date.now().toString(),
+          name: place.name, 
+          address: place.address,
+          cp: place.cp,
+          open_h: place.open_h,
+          close_h: place.close_h
+        });
+    }
+  
+    res.sendStatus(200);
+    
+  } catch (error) {
+    res.status(400).send("Error al actualizar desde el archivo");
   }
-
-  res.sendStatus(200);
 });
 
 /**
@@ -247,14 +262,20 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
  */
 router.put("/:placeId", async (req, res) => {
   const { placeId } = req.params;
-  const isFind = await PlaceDelivery.findOne({ where: { id: placeId } });
 
-  if (!isFind) return res.status(404).send("Lugar no encontrado");
-
-  await PlaceDelivery.update(req.body, {
-    where: { id: placeId },
-  });
-  res.json({ success: `se ha modificado ${placeId}` });
+  try {
+    
+    const isFind = await PlaceDelivery.findOne({ where: { id: placeId } });
+  
+    if (!isFind) return res.status(404).send("Lugar no encontrado");
+  
+    await PlaceDelivery.update(req.body, {
+      where: { id: placeId },
+    });
+    res.json({ success: `se ha modificado ${placeId}` });
+  } catch (error) {
+    res.status(400).send("Error al actualizar");
+  }
 });
 
 /**
@@ -262,12 +283,18 @@ router.put("/:placeId", async (req, res) => {
  */
 router.delete("/:placeId", async (req, res) => {
   const { placeId } = req.params;
-  const isFind = await PlaceDelivery.findOne({ where: { id: placeId } });
 
-  if (!isFind) return res.status(404).send("Lugar no encontrado");
-
-  await PlaceDelivery.destroy({ where: { id: placeId } });
-  res.status(200).send();
+  try {
+    const isFind = await PlaceDelivery.findOne({ where: { id: placeId } });
+  
+    if (!isFind) return res.status(404).send("Lugar no encontrado");
+  
+    await PlaceDelivery.destroy({ where: { id: placeId } });
+    res.status(200).send();
+    
+  } catch (error) {
+    res.status(400).send("Error al eliminar");
+  }
 });
 
 module.exports = router;

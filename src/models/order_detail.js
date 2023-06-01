@@ -14,6 +14,10 @@ module.exports = (sequelize, type) =>{
             type: type.DOUBLE,
         },
 
+        total_price:{
+            type: type.DOUBLE,
+        },
+
         id_order:{
             type: type.INTEGER,
             references: {

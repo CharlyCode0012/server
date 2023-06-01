@@ -1,8 +1,7 @@
 const router = require('express').Router();
 
-const { QueryTypes } = require('sequelize');
+const { QueryTypes, Op } = require('sequelize');
 const {conn, Order, Delivery} = require('../../db/db');
-const { Op } = require("sequelize");
 
 router.get('/', async (req, res)=>{
     const order = req.query.order ?? "ASC";
@@ -94,8 +93,12 @@ router.get('/searchByDate', async (req, res)=>{
 
 
 router.post('/', async (req, res)=>{
-    const order = await Order.create(req.body);
-    res.json(order);
+    try {
+        const order = await Order.create(req.body);
+        res.json(order);      
+    } catch (error) {
+        res.status(400).send("Error");
+    }
 });
 
 router.put('/:orderId', async (req, res)=>{
@@ -114,9 +117,9 @@ router.put('/:orderId', async (req, res)=>{
         
         if(!isFolio)
         {
-            const { total, amount } = isFind ?? "";
+            const { total, amount, id_place, id_client } = isFind ?? "";
             const rest = total- amount;
-            await Delivery.create({folio, rest, state: 0, id_order: orderId});
+            await Delivery.create({folio, rest, state: 0, id_order: orderId, id_client, id_place});
         }
     } 
 

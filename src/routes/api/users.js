@@ -27,57 +27,62 @@ router.get("/", async (req, res) => {
  * the existing users in the DB 
  */
 router.get("/download", async (req, res) => {
+  try {
+    // Get users from DB
+    const usersQuery = await User.findAll()
+    const users = JSON.parse(JSON.stringify(usersQuery))
+  
+    // Create excel workbook, where sheets will be stored
+    const workbook = new ExcelJS.Workbook();
+  
+    // Create a sheet and assign to it some columns metadata to insert rows
+    const worksheet = workbook.addWorksheet("Lugares de entrega")
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 20 },
+      { header: "Nombre", key: "name", width: 25 },
+      { header: "Fecha de nacimiento", key: "date_B", width: 25 },
+      { header: "Tipo de usuario", key: "type_use", width: 25 },
+      { header: "Correo", key: "e_mail", width: 25 },
+      { header: "Contraseña", key: "pass", width: 30 },
+      { header: "Celular", key: "cel", width: 30 },
+    ]
+  
+    // Style each column
+    const idColumn = worksheet.getColumn("id"),
+          nameColumn = worksheet.getColumn("name"),
+          birthdayColumn = worksheet.getColumn("date_B"),
+          userTypeColumn = worksheet.getColumn("type_use"),
+          emailColumn = worksheet.getColumn("e_mail"),
+          passwordColumn = worksheet.getColumn("pass"),
+          cellphoneColumn = worksheet.getColumn("cel");
+  
+    const alignment = { horizontal: "center" };
+  
+    idColumn.alignment = alignment
+    nameColumn.alignment = alignment
+    birthdayColumn.alignment = alignment
+    userTypeColumn.alignment = alignment
+    emailColumn.alignment = alignment
+    passwordColumn.alignment = alignment
+    cellphoneColumn.alignment = alignment
+  
+    // Style header row
+    const headerRow = worksheet.getRow(1)
+    headerRow.font = { bold: true, size: 14 };
+  
+    // Add data of every user
+    for (const user of users)
+      worksheet.addRow(user)
+  
+    const fileBuffer = await workbook.xlsx.writeBuffer();
+  
+    res.attachment("Usuarios.xlsx")
+    res.status(200).end(fileBuffer);
+    
+  } catch (error) {
+    res.status(400).send(error);
+  }
 
-  // Get users from DB
-  const usersQuery = await User.findAll()
-  const users = JSON.parse(JSON.stringify(usersQuery))
-
-  // Create excel workbook, where sheets will be stored
-  const workbook = new ExcelJS.Workbook();
-
-  // Create a sheet and assign to it some columns metadata to insert rows
-  const worksheet = workbook.addWorksheet("Lugares de entrega")
-  worksheet.columns = [
-    { header: "ID", key: "id", width: 20 },
-    { header: "Nombre", key: "name", width: 25 },
-    { header: "Fecha de nacimiento", key: "date_B", width: 25 },
-    { header: "Tipo de usuario", key: "type_use", width: 25 },
-    { header: "Correo", key: "e_mail", width: 25 },
-    { header: "Contraseña", key: "pass", width: 30 },
-    { header: "Celular", key: "cel", width: 30 },
-  ]
-
-  // Style each column
-  const idColumn = worksheet.getColumn("id"),
-        nameColumn = worksheet.getColumn("name"),
-        birthdayColumn = worksheet.getColumn("date_B"),
-        userTypeColumn = worksheet.getColumn("type_use"),
-        emailColumn = worksheet.getColumn("e_mail"),
-        passwordColumn = worksheet.getColumn("pass"),
-        cellphoneColumn = worksheet.getColumn("cel");
-
-  const alignment = { horizontal: "center" };
-
-  idColumn.alignment = alignment
-  nameColumn.alignment = alignment
-  birthdayColumn.alignment = alignment
-  userTypeColumn.alignment = alignment
-  emailColumn.alignment = alignment
-  passwordColumn.alignment = alignment
-  cellphoneColumn.alignment = alignment
-
-  // Style header row
-  const headerRow = worksheet.getRow(1)
-  headerRow.font = { bold: true, size: 14 };
-
-  // Add data of every user
-  for (const user of users)
-    worksheet.addRow(user)
-
-  const fileBuffer = await workbook.xlsx.writeBuffer();
-
-  res.attachment("Usuarios.xlsx")
-  res.status(200).end(fileBuffer);
 });
 
 /**
@@ -126,13 +131,17 @@ router.get("/searchByName", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   const cel = req.body.cel;
-  const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
-
-  if (cellphoneAlreadyTaken) 
-    return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
-      
-  const user = await User.create(req.body);
-  return res.json(user);
+  try {
+    const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
+  
+    if (cellphoneAlreadyTaken) 
+      return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
+        
+    const user = await User.create(req.body);
+    return res.json(user);
+  } catch (error) {
+    res.status(400).send("No se pudo crear");
+  }
 });
 
 /**
@@ -140,10 +149,43 @@ router.post("/", async (req, res) => {
  * them in their profile
  */
 router.put("/updateProfile", async (req, res) => {
+  const userId = req.body.id;
+  try {
+      // Check if user exists
+      
+      const isFind = await User.findOne({ where: { id: userId } });
+    
+      if (!isFind) return res.status(404).send("Usuario no encontrado");
+    
+      // Check if cellphone repeats
+      const cel = req.body.cel;
+      const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
+    
+      if (cellphoneAlreadyTaken) 
+        return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
+    
+      // Everything OK, update user
+      await User.update({
+        pass: req.body.pass,
+        cel: req.body.cel,
+      }, {
+        where: { id: userId },
+      });
+      res.json({ success: `se ha modificado ${userId}` });
+    } catch (error) {
+      res.status(400).send("Error");
+    }
+})
+
+/**
+ * Updates a user in the DB
+ */
+router.put("/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
     // Check if user exists
-    const userId = req.body.id;
     const isFind = await User.findOne({ where: { id: userId } });
-  
+    
     if (!isFind) return res.status(404).send("Usuario no encontrado");
   
     // Check if cellphone repeats
@@ -154,37 +196,13 @@ router.put("/updateProfile", async (req, res) => {
       return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
   
     // Everything OK, update user
-    await User.update({
-      pass: req.body.pass,
-      cel: req.body.cel,
-    }, {
+    await User.update(req.body, {
       where: { id: userId },
     });
     res.json({ success: `se ha modificado ${userId}` });
-})
-
-/**
- * Updates a user in the DB
- */
-router.put("/:userId", async (req, res) => {
-  // Check if user exists
-  const { userId } = req.params;
-  const isFind = await User.findOne({ where: { id: userId } });
-
-  if (!isFind) return res.status(404).send("Usuario no encontrado");
-
-  // Check if cellphone repeats
-  const cel = req.body.cel;
-  const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
-
-  if (cellphoneAlreadyTaken) 
-    return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
-
-  // Everything OK, update user
-  await User.update(req.body, {
-    where: { id: userId },
-  });
-  res.json({ success: `se ha modificado ${userId}` });
+  } catch (error) {
+    res.status(400).send("Error");
+  }
 });
 
 /**
@@ -192,12 +210,16 @@ router.put("/:userId", async (req, res) => {
  */
 router.delete("/:userId", async (req, res) => {
   const { userId } = req.params;
-  const isFind = await User.findOne({ where: { id: userId } });
+  try {
+    const isFind = await User.findOne({ where: { id: userId } });
 
-  if (!isFind) return res.status(404).send("Usuario no encontrado");
-
-  await User.destroy({ where: { id: userId } });
-  res.status(200).send();
+    if (!isFind) return res.status(404).send("Usuario no encontrado");
+  
+    await User.destroy({ where: { id: userId } });
+    res.status(200).send();
+  } catch (error) {
+    res.status(400).send("No se pudo borrar");
+  }
 });
 
 router.post(
