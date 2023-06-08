@@ -9,6 +9,24 @@ const {conn, Product, CatalogProduct, CategoryProd, Catalog } = require("../../d
 Catalog.belongsToMany(Product, { through: CatalogProduct });
 Product.belongsToMany(Catalog, { through: CatalogProduct });
 
+async function keyWordExists(keyWord, productID = null){
+  try { 
+    const isFindKey = productID
+    ? await Product.findOne({ where: {
+        key_word: keyWord,
+        id:{
+          [Op.ne]: productID
+        }
+    }}) 
+    : await Product.findOne({ where: {key_word: keyWord }});
+
+    return isFindKey? true  : false;
+  } catch (error) {
+    console.log(error);
+    return true;
+  }  
+}
+
 router.get("/", async (req, res) => {
   const order = req.query.order ?? "ASC"
   const catalogId = req.query.catalogId ?? "";
@@ -45,21 +63,151 @@ router.get("/", async (req, res) => {
   } catch (error) {
     res.json(error);
   }
-  
- 
 });
 
-router.get('/getByKeyWord/:keyWord', async (req, res) =>{
-  const { productId } = req.query;
+router.get('/searchByKeyWord', async (req, res) =>{
+  const { order, search, catalogId } = req.query;
+  let products = [];
 
   try {
-    const product = await Product.findAll({
-      where: {id: productId}
-    })
+    if (catalogId !== "") {
+      products = await conn.query(`
+        SELECT p.*, cat.category_name AS category_name, cat.id AS id_category
+        FROM products p
+        LEFT JOIN catalog_products cp ON cp.id_product = p.id
+        LEFT JOIN catalogs c ON c.id = cp.id_catalog
+        LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
+        LEFT JOIN categories cat ON cat.id = cp2.id_category
+        WHERE p.key_word = :search
+        ORDER BY p.product_name ${order === 'ASC' ? 'ASC' : 'DESC'}
+      `, {
+        replacements: { search },
+        type: QueryTypes.SELECT,
+      });
+    } else {
+      products = [];
+    }
+
+    products = products.reduce((uniqueProducts, product) => {
+      if (!uniqueProducts.find(p => p.id === product.id)) {
+        uniqueProducts.push(product);
+      }
+      return uniqueProducts;
+    }, []);
+
+    res.json(products);
+  } catch (error) {
+    return res.status(400).send({ error: 'Un error en la busqueda'});
+  }
   
-    if(!product) return res.json({error: 'No se encontro ese producto'});
+});
+
+router.get('/searchByStock', async (req, res) =>{
+  const { order, search, catalogId } = req.query;
+  let products = [];
+
+  try {
+    if (catalogId !== "") {
+      products = await conn.query(`
+        SELECT p.*, cat.category_name AS category_name, cat.id AS id_category
+        FROM products p
+        LEFT JOIN catalog_products cp ON cp.id_product = p.id
+        LEFT JOIN catalogs c ON c.id = cp.id_catalog
+        LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
+        LEFT JOIN categories cat ON cat.id = cp2.id_category
+        WHERE p.stock = :search
+        ORDER BY p.product_name ${order === 'ASC' ? 'ASC' : 'DESC'}
+      `, {
+        replacements: { search },
+        type: QueryTypes.SELECT,
+      });
+    } else {
+      products = [];
+    }
+
+    products = products.reduce((uniqueProducts, product) => {
+      if (!uniqueProducts.find(p => p.id === product.id)) {
+        uniqueProducts.push(product);
+      }
+      return uniqueProducts;
+    }, []);
+
+    res.json(products);
+  } catch (error) {
+    return res.status(400).send({ error: 'Un error en la busqueda'});
+  }
   
-    res.json(product);
+});
+
+router.get('/searchByName', async (req, res) =>{
+  const { order, search, catalogId } = req.query;
+  let products = [];
+
+  try {
+    if (catalogId !== "") {
+      products = await conn.query(`
+        SELECT p.*, cat.category_name AS category_name, cat.id AS id_category
+        FROM products p
+        LEFT JOIN catalog_products cp ON cp.id_product = p.id
+        LEFT JOIN catalogs c ON c.id = cp.id_catalog
+        LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
+        LEFT JOIN categories cat ON cat.id = cp2.id_category
+        WHERE p.product_name LIKE :search
+        ORDER BY p.product_name ${order === 'ASC' ? 'ASC' : 'DESC'}
+      `, {
+        replacements: { search: `%${ search }%` },
+        type: QueryTypes.SELECT,
+      });
+    } else {
+      products = [];
+    }
+
+    products = products.reduce((uniqueProducts, product) => {
+      if (!uniqueProducts.find(p => p.id === product.id)) {
+        uniqueProducts.push(product);
+      }
+      return uniqueProducts;
+    }, []);
+
+    res.json(products);
+  } catch (error) {
+    return res.status(400).send({ error: 'Un error en la busqueda'});
+  }
+  
+});
+
+
+router.get('/searchByPrice', async (req, res) =>{
+  const { order, search, catalogId } = req.query;
+  let products = [];
+
+  try {
+    if (catalogId !== "") {
+      products = await conn.query(`
+        SELECT p.*, cat.category_name AS category_name, cat.id AS id_category
+        FROM products p
+        LEFT JOIN catalog_products cp ON cp.id_product = p.id
+        LEFT JOIN catalogs c ON c.id = cp.id_catalog
+        LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
+        LEFT JOIN categories cat ON cat.id = cp2.id_category
+        WHERE p.price = :search
+        ORDER BY p.product_name ${order === 'ASC' ? 'ASC' : 'DESC'}
+      `, {
+        replacements: { search },
+        type: QueryTypes.SELECT,
+      });
+    } else {
+      products = [];
+    }
+
+    products = products.reduce((uniqueProducts, product) => {
+      if (!uniqueProducts.find(p => p.id === product.id)) {
+        uniqueProducts.push(product);
+      }
+      return uniqueProducts;
+    }, []);
+
+    res.json(products);
   } catch (error) {
     return res.status(400).send({ error: 'Un error en la busqueda'});
   }
@@ -70,9 +218,8 @@ router.post("/", async (req, res) => {
   const { categoryId, catalogId } = req.query;
   const { key_word } = req.body;
 
-
   try {
-    if(!keyWordExists(key_word)){
+    if(! await keyWordExists(key_word ?? "")){
       const product = await Product.create(req.body);
       const productId = product.id;
   
@@ -93,11 +240,10 @@ router.put("/:productId", async (req, res) => {
   const { categoryId } = req.query;
   const { productId } = req.params;
   const { key_word } = req.body;
-  
   try {
     if (!productId) return res.status(404).send("Producto no encontrado");
 
-    if(!keyWordExists(key_word, productId)){
+    if(! await keyWordExists(key_word ?? "", productId)){
 
       await Product.update(req.body, {
         where:{ id: productId}
@@ -139,22 +285,6 @@ router.delete("/:productId", async (req, res) => {
     
   });
 
-  async function keyWordExists(keyWord, productID = null){
-    try { 
-      const isFindKey = productID
-      ? await Product.findOnde({ where: {
-          key_word: keyWord,
-          id:{
-            [Op.ne]: productID
-          }
-      }}) 
-      : await Product.findOnde({ where: {key_word: keyWord }});
-
-      return isFindKey? true  : false;
-    } catch (error) {
-      console.log(error);
-      return true;
-    }  
-  }
+  
 
 module.exports = router;

@@ -11,11 +11,11 @@ router.get('/', async (req, res)=>{
             FROM orders o
             LEFT JOIN places_deliveries p ON p.id = o.id_place
             LEFT JOIN payment_methods p2 ON p2.id = id_payment_method
-            WHERE o.state = 'NA'
-            ORDER BY o.folio ${order}
+            WHERE o.state = :state
+            ORDER BY o.folio ${order === 'ASC' ? 'ASC' : 'DESC'}
         `, {
-            replacements: { order },
             type: QueryTypes.SELECT,
+            replacements: { state: 'NA' }
         });
         res.json(orders);
     } catch (error) {
@@ -25,23 +25,23 @@ router.get('/', async (req, res)=>{
 });
 
 router.get( '/searchByState', async ( req, res ) => {
-    const { order, search } = req.query
+    const { order, search } = req.query;
     try {
         const query = `
             SELECT o.id, o.folio, o.date_order, o.total, o.amount, o.state, o.id_client, p.address AS place, p2.no_card AS payment
             FROM orders o
             LEFT JOIN places_deliveries p ON p.id = o.id_place
             LEFT JOIN payment_methods p2 ON p2.id = o.id_payment_method
-            WHERE o.state LIKE :search
-            ORDER BY o.folio ${order}
+            WHERE o.state = :search
+            ORDER BY o.folio ${order === 'ASC' ? 'ASC' : 'DESC'}
         `;
         const orders = await conn.query(query, {
-            replacements: { search: `%${search}%` },
+            replacements: { search: search },
             type: QueryTypes.SELECT,
         });
         res.json(orders);
     } catch (error) {
-        res.sendStatus(404);
+        res.status(400).send(error);
     }  
 });
 
@@ -54,7 +54,7 @@ router.get('/searchByPlace', async (req, res) => {
             LEFT JOIN places_deliveries p ON p.id = o.id_place
             LEFT JOIN payment_methods p2 ON p2.id = o.id_payment_method
             WHERE p.address LIKE :search AND o.state = 'NA'
-            ORDER BY o.folio ${order === 'DESC' ? 'DESC' : 'ASC'}
+            ORDER BY o.folio ${order === 'ASC' ? 'ASC' : 'DESC'}
         `, {
             replacements: { search: `%${search}%` },
             type: QueryTypes.SELECT,
@@ -77,7 +77,7 @@ router.get('/searchByDate', async (req, res)=>{
             LEFT JOIN places_deliveries p ON p.id = o.id_place
             LEFT JOIN payment_methods p2 ON p2.id = o.id_payment_method
             WHERE o.date_order LIKE :search 
-            ORDER BY o.folio ${order === 'DESC' ? 'DESC' : 'ASC'}
+            ORDER BY o.folio ${order === 'ASC' ? 'ASC' : 'DESC'}
         `, {
             replacements: { search: `%${search}%` },
             type: QueryTypes.SELECT,
@@ -91,6 +91,26 @@ router.get('/searchByDate', async (req, res)=>{
     
 });
 
+router.get( '/searchByFolio', async ( req, res ) => {
+    const { order, search } = req.query;
+    try {
+        const query = `
+            SELECT o.id, o.folio, o.date_order, o.total, o.amount, o.state, o.id_client, p.address AS place, p2.no_card AS payment
+            FROM orders o
+            LEFT JOIN places_deliveries p ON p.id = o.id_place
+            LEFT JOIN payment_methods p2 ON p2.id = o.id_payment_method
+            WHERE o.folio = :search
+            ORDER BY o.folio ${order === 'ASC' ? 'ASC' : 'DESC'}
+        `;
+        const orders = await conn.query(query, {
+            replacements: { search: search },
+            type: QueryTypes.SELECT,
+        });
+        res.json(orders);
+    } catch (error) {
+        res.status(400).send(error);
+    }  
+});
 
 router.post('/', async (req, res)=>{
     try {
@@ -102,7 +122,7 @@ router.post('/', async (req, res)=>{
 });
 
 router.put('/:orderId', async (req, res)=>{
-    const {state} = req.body;
+    const {state, amount} = req.body;
     const {folio} = req.query;
     const {orderId} = req.params;
     try {
@@ -113,13 +133,16 @@ router.put('/:orderId', async (req, res)=>{
 
     if(state !== "NA"){
         const isFolio = await Delivery.findOne({where: {folio: folio}});
-
+        const { total, id_place, id_client } = isFind ?? "";
+        const rest = total - amount;
         
         if(!isFolio)
         {
-            const { total, amount, id_place, id_client } = isFind ?? "";
-            const rest = total- amount;
             await Delivery.create({folio, rest, state: 0, id_order: orderId, id_client, id_place});
+        }
+        else 
+        {
+            await Delivery.update({rest}, {where: {id_order: orderId}});
         }
     } 
 

@@ -2,17 +2,52 @@ const router = require('express').Router();
 const ExcelJS = require("exceljs")
 
 const {Catalog} = require('../../db/db');
+const { Op } = require('sequelize');
 
 router.get('/', async (req, res)=>{
+  const order  = req.query.order || "ASC";
   try {
-    const catalogs = await Catalog.findAll();
+    const catalogs = await Catalog.findAll({
+      order: [['name', order]]
+    });
+    res.json(catalogs);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send("Error al traer los datos");
+  }
+});
+
+router.get('/searchByName', async (req, res) => {
+  const { order, search } = req.query;
+
+  try {
+    const catalogs = await Catalog.findAll({ 
+      where: {
+        name: { [Op.like]: `%${search}%` }
+      },
+      order: [['name', order]]
+    });
     res.json(catalogs);
   } catch (error) {
     res.status(400).send("Error al traer los datos");
   }
 });
 
+router.get('/searchByState', async (req, res) => {
+  const { order, search } = req.query;
 
+  try {
+    const catalogs = await Catalog.findAll({ 
+      where: {
+        state: search,
+      },
+      order: [['name', order]]
+    });
+    res.json(catalogs);
+  } catch (error) {
+    res.status(400).send("Error al traer los datos");
+  }
+});
 
 /**
  * Returns an xlsx file that contains the info of 

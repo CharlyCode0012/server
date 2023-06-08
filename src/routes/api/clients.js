@@ -12,6 +12,17 @@ router.get('/', async (req, res)=>{
     }
 });
 
+router.get('/searchByNumber', async (req, res)=>{
+    const {order, search} = req.query;
+    try {
+        const clients = await Client.findOne({where: {number: search}});
+        res.json(clients);
+        
+    } catch (error) {
+        res.status(400).send("Error al traer los datos");
+    }
+});
+
 router.post('/', async (req, res)=>{
     try {
         const Client = await Client.create(req.body);
