@@ -25,12 +25,12 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
 
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Formato de imagen no válido. Se permiten archivos JPEG, PNG y GIF.'));
+      cb(new Error('Formato de imagen no válido. Se permiten archivos JPEG y PNG.'));
     }
   }
 });

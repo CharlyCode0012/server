@@ -17,7 +17,7 @@ router.get('/', async (req, res)=>{
             INNER JOIN order_details ON orders.id = order_details.id_order
             INNER JOIN products ON order_details.id_product = products.id
             INNER JOIN places_deliveries places ON orders.id_place = places.id
-            ORDER BY d.date_delyvery ${order === 'ASC' ? 'ASC' : 'DESC'}
+            ORDER BY d.date_delivery ${order === 'ASC' ? 'ASC' : 'DESC'}
             `,
             { type: QueryTypes.SELECT }
         );

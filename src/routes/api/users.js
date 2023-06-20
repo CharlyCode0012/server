@@ -171,7 +171,10 @@ router.put("/updateProfile", async (req, res) => {
       }, {
         where: { id: userId },
       });
-      res.json({ success: `se ha modificado ${userId}` });
+
+      const user = await User.findOne({ where: {id: userId} });
+      //console.log(JSON.stringify(user));
+      res.json(user);
     } catch (error) {
       res.status(400).send("Error");
     }

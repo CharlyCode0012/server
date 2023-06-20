@@ -1,4 +1,6 @@
 const router = require('express').Router();
+
+const upload = require("../../config.js");
 const ExcelJS = require("exceljs")
 
 const {Catalog} = require('../../db/db');
@@ -51,14 +53,14 @@ router.get('/searchByState', async (req, res) => {
 
 /**
  * Returns an xlsx file that contains the info of 
- * the existing categories in the DB 
+ * the existing catalogs in the DB 
  */
 router.get("/download", async (req, res) => {
 
   try {
-    // Get categories from DB
+    // Get catalogs from DB
     const catalogsQuery = await Catalog.findAll()
-    const categories = JSON.parse(JSON.stringify(catalogsQuery)).map(catalog=> ({
+    const catalogs = JSON.parse(JSON.stringify(catalogsQuery)).map(catalog=> ({
       "id": catalog.id,
       "name": catalog.name,
       "description": catalog.description,
@@ -86,9 +88,9 @@ router.get("/download", async (req, res) => {
     const headerRow = worksheet.getRow(1)
     headerRow.font = { bold: true, size: 14 };
   
-    // Add data of every category
-    for (const category of categories)
-      worksheet.addRow(category)
+    // Add data of every catalog
+    for (const catalog of catalogs)
+      worksheet.addRow(catalog)
   
     const fileBuffer = await workbook.xlsx.writeBuffer();
   
@@ -106,6 +108,56 @@ router.post('/', async (req, res)=>{
     res.json(catalog);
   } catch (error) {
     res.status(400).send("Error al crear");
+  }
+});
+
+router.post("/upload", upload.single("excel_file"), async (req, res) => {
+  const file = req.file
+
+  try {
+    // Create excel info getter
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(file.path)
+    const worksheet = workbook.getWorksheet(1);
+    
+    // Get every catalog from the excel
+    const catalogs = []
+    worksheet.eachRow(function(row, rowNumber) {
+      if (rowNumber === 1) return
+  
+      const [, id, name, description, state] = row.values
+  
+      catalogs.push({
+        id,
+        name: name,
+        description: description,
+        state: state,
+      })
+    });
+  
+    // BUG: If validation is needed, it should go here
+  
+    // For every catalog, add it if ID not found, or update it if found
+    for (const catalog of catalogs) {
+      
+      if (catalog.id !== undefined) // Place indeed exists, update its info
+        await Catalog.update(catalog, {
+          where: { id: catalog.id },
+        });
+  
+      else // Place didn't exist, create a new one
+        await Catalog.create({ 
+          id: Date.now().toString(),
+          name: catalog.name, 
+          description: catalog.description,
+          state: catalog.state,
+        });
+    }
+  
+    res.sendStatus(200);
+    
+  } catch (error) {
+    res.status(400).send("Error al actualizar desde el archivo");
   }
 });
 
