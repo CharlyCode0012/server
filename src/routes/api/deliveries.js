@@ -188,6 +188,7 @@ router.get("/download", async (req, res) => {
             column.width = Math.max(column.width, cell.value ? cell.value.toString().length + 2 : 10); // Adjust width based on cell content
             });
         });
+
         const fileBuffer = await workbook.xlsx.writeBuffer();
 
         res.setHeader('content-disposition', 'attachment; filename="Deliveries.xlsx"');

@@ -71,7 +71,23 @@ router.get("/download", async (req, res) => {
   
     // Add data of every payment method
     for (const paymentMethod of paymentMethods)
-      worksheet.addRow(paymentMethod)
+      worksheet.addRow(paymentMethod);
+    
+    // Auto-size columns to fit the content and headers
+    worksheet.columns.forEach((column) => {
+      column.header = column.header.toString(); // Convert header to string
+      column.width = Math.max(column.header.length, 12); // Set minimum width based on header length
+
+      column.eachCell({ includeEmpty: true }, (cell) => {
+          cell.alignment = { 
+          vertical: "middle", 
+          horizontal: "center",
+          wrapText: true // Enable text wrapping
+      };
+      column.width = Math.max(column.width, cell.value ? cell.value.toString().length + 2 : 10); // Adjust width based on cell content
+      });
+  });
+
   
     const fileBuffer = await workbook.xlsx.writeBuffer();
   

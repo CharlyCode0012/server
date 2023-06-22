@@ -86,7 +86,7 @@ router.get("/download", async (req, res) => {
     worksheet.columns = [
       { header: "ID", key: "id", width: 20 },
       { header: "Nombre del producto", key: "product_name", width: 25 },
-      { header: "Descripcion", key: "description", width: 25 },
+      { header: "Descripción", key: "description", width: 25 },
       { header: "Palabra clave", key: "key_word", width: 25 },
       { header: "Precio", key: "price", width: 25 },
       { header: "No. de existencia", key: "stock", width: 30 },
@@ -115,8 +115,23 @@ router.get("/download", async (req, res) => {
   
     // Add data of every payment method
     for (const product of products)
-      worksheet.addRow(product)
+      worksheet.addRow(product);
   
+    // Auto-size columns to fit the content and headers
+    worksheet.columns.forEach((column) => {
+      column.header = column.header.toString(); // Convert header to string
+      column.width = Math.max(column.header.length, 12); // Set minimum width based on header length
+
+      column.eachCell({ includeEmpty: true }, (cell) => {
+          cell.alignment = { 
+          vertical: "middle", 
+          horizontal: "center",
+          wrapText: true // Enable text wrapping
+      };
+      column.width = Math.max(column.width, cell.value ? cell.value.toString().length + 2 : 10); // Adjust width based on cell content
+      });
+  });
+
     const fileBuffer = await workbook.xlsx.writeBuffer();
   
     res.setHeader('content-disposition', 'attachment; filename="Productos.xlsx"');
