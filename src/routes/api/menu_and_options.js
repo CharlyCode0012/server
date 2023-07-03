@@ -1,11 +1,11 @@
 const router = require('express').Router();
 
-const {MenuRes} = require('../../db/db');
+const {MenuAndOptions} = require('../../db/db');
 
 router.get('/', async (req, res)=>{
 
     try {
-        const menuRess = await MenuRes.findAll();
+        const menuRess = await MenuAndOptions.findAll();
         res.json(menuRess);  
     } catch (error) {
         res.status(400).send("Error al traer");
@@ -14,7 +14,7 @@ router.get('/', async (req, res)=>{
 
 router.post('/', async (req, res)=>{
     try {
-        const menuRes = await MenuRes.create(req.body);
+        const menuRes = await MenuAndOptions.create(req.body);
         res.json(menuRes);     
     } catch (error) {
         res.status(400).send("Error al crear");
@@ -25,11 +25,11 @@ router.put('/:menuResId', async (req, res)=>{
     const {menuResId} = req.params;
 
     try {
-        const isFind = await MenuRes.findOne({where: {id: menuResId}});
+        const isFind = await MenuAndOptions.findOne({where: {id: menuResId}});
     
         if (!isFind) return res.status(404).send("Pregunta no encontrada");
     
-        await MenuRes.update(req.body, {
+        await MenuAndOptions.update(req.body, {
             where: {id: menuResId}
         });
         res.json({success: `se ha modificado ${menuResId}`});
@@ -43,11 +43,11 @@ router.delete('/:menuResId', async (req, res)=>{
     const {menuResId} = req.params;
 
     try {
-        const isFind = await MenuRes.findOne({where: {id: menuResId}});
+        const isFind = await MenuAndOptions.findOne({where: {id: menuResId}});
         
         if (!isFind) return res.status(404).send("Pregunta no encontrada");
     
-        await MenuRes.destroy({where: {id: menuResId}});
+        await MenuAndOptions.destroy({where: {id: menuResId}});
         
     } catch (error) {
         res.status(400).send("Error al eliminar");

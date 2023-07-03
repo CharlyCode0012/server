@@ -3,7 +3,7 @@ const moment = require('moment');
 
 const ExcelJS = require("exceljs");
 const { QueryTypes } = require('sequelize');
-const {Delivery, Order, conn} = require('../../db/db');
+const {Delivery, conn} = require('../../db/db');
 
 router.get('/', async (req, res)=>{
     const { order } = req.query;
@@ -120,7 +120,7 @@ router.get("/download", async (req, res) => {
         const workbook = new ExcelJS.Workbook();
 
         // Create a sheet and assign to it some columns metadata to insert rows
-        const worksheet = workbook.addWorksheet("Lugares de entrega");
+        const worksheet = workbook.addWorksheet("Entregas");
         worksheet.columns = [
         { header: "ID", key: "id", width: 20 },
         { header: "Folio", key: "folio", width: 25 },
@@ -191,7 +191,7 @@ router.get("/download", async (req, res) => {
 
         const fileBuffer = await workbook.xlsx.writeBuffer();
 
-        res.setHeader('content-disposition', 'attachment; filename="Deliveries.xlsx"');
+        res.setHeader('content-disposition', 'attachment; filename="Entregas.xlsx"');
         res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
         res.status(200).end(fileBuffer);
     } catch (error) {

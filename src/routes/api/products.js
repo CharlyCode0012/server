@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
+const fs = require('fs');
+const path = require('path');
 const ExcelJS = require("exceljs");
 const upload = require("../../config.js");
 
@@ -82,11 +84,11 @@ router.get("/download", async (req, res) => {
     const workbook = new ExcelJS.Workbook();
   
     // Create a sheet and assign to it some columns metadata to insert rows
-    const worksheet = workbook.addWorksheet("Lugares de entrega")
+    const worksheet = workbook.addWorksheet("Productos")
     worksheet.columns = [
       { header: "ID", key: "id", width: 20 },
       { header: "Nombre del producto", key: "product_name", width: 25 },
-      { header: "Descripción", key: "description", width: 25 },
+      { header: "Descripción", key: "description", width: 35 },
       { header: "Palabra clave", key: "key_word", width: 25 },
       { header: "Precio", key: "price", width: 25 },
       { header: "No. de existencia", key: "stock", width: 30 },
@@ -142,41 +144,74 @@ router.get("/download", async (req, res) => {
   }
 });
 
-router.get('/searchByKeyWord', async (req, res) =>{
-  const { order, search, catalogId } = req.query;
-  let products = [];
-
+router.get("/downloadWithCatalogId", async (req, res) => {
+  const { catalogID } = req.query;
   try {
-    if (catalogId !== "") {
-      products = await conn.query(`
-        SELECT p.*, cat.category_name AS category_name, cat.id AS id_category
-        FROM products p
-        LEFT JOIN catalog_products key_word ON key_word.id_product = p.id
-        LEFT JOIN catalogs c ON c.id = key_word.id_catalog
-        LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
-        LEFT JOIN categories cat ON cat.id = cp2.id_category
-        WHERE p.key_word = :search
-        ORDER BY p.product_name ${order === 'ASC' ? 'ASC' : 'DESC'}
-      `, {
-        replacements: { search },
-        type: QueryTypes.SELECT,
+    // Obtener los productos del catálogo desde la base de datos
+    const productsCatalog = await CatalogProduct.findAll({ where: { id_catalog: catalogID } });
+
+    const productos = await Promise.all(productsCatalog.map(async (product) => {
+      const resolvedMenuOption = await Product.findOne({ where: { id: product.id_product } });
+      return resolvedMenuOption.dataValues;
+    }));
+
+    const products = JSON.parse(JSON.stringify(productos));
+
+    // Crear el libro de Excel y la hoja de trabajo
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Productos");
+
+    // Definir las columnas de la hoja de trabajo
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 20 },
+      { header: "Nombre del producto", key: "product_name", width: 25 },
+      { header: "Descripción", key: "description", width: 30 },
+      { header: "Palabra clave", key: "key_word", width: 25 },
+      { header: "Precio", key: "price", width: 25 },
+      { header: "No. de existencia", key: "stock", width: 30 },
+    ];
+
+    // Establecer el estilo de las columnas
+    worksheet.columns.forEach((column) => {
+      column.alignment = { horizontal: "center" };
+    });
+
+    // Establecer el estilo de la fila de encabezado
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, size: 14 };
+
+    // Agregar los datos de cada producto
+    for (const product of products)
+      worksheet.addRow(product);
+
+    // Autoajustar el ancho de las columnas para que se ajusten al contenido y encabezados
+    worksheet.columns.forEach((column) => {
+      column.header = column.header?.toString(); // Convert header to string
+      column.width = Math.max(column.header.length, 12); // Set minimum width based on header length
+    
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        cell.alignment = { 
+          vertical: "middle", 
+          horizontal: "center",
+          wrapText: true // Enable text wrapping
+        };
+        if (cell.value) {
+          const cellLength = cell.value.toString().length;
+          column.width = Math.max(column.width, cellLength + 2); // Adjust width based on cell content
+        }
       });
-    } else {
-      products = [];
-    }
+    });
 
-    products = products.reduce((uniqueProducts, product) => {
-      if (!uniqueProducts.find(p => p.id === product.id)) {
-        uniqueProducts.push(product);
-      }
-      return uniqueProducts;
-    }, []);
+    // Generar el archivo y enviar la respuesta
+    const fileBuffer = await workbook.xlsx.writeBuffer();
 
-    res.json(products);
+    res.setHeader('content-disposition', 'attachment; filename="Productos.xlsx"');
+    res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
+    res.status(200).end(fileBuffer);
   } catch (error) {
-    return res.status(400).send({ error: 'Un error en la busqueda'});
+    res.status(400).send("Error al descargar el archivo");
+    console.log(error);
   }
-  
 });
 
 router.get('/searchByStock', async (req, res) =>{
@@ -268,6 +303,43 @@ router.get('/searchByPrice', async (req, res) =>{
         LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
         LEFT JOIN categories cat ON cat.id = cp2.id_category
         WHERE p.price = :search
+        ORDER BY p.product_name ${order === 'ASC' ? 'ASC' : 'DESC'}
+      `, {
+        replacements: { search },
+        type: QueryTypes.SELECT,
+      });
+    } else {
+      products = [];
+    }
+
+    products = products.reduce((uniqueProducts, product) => {
+      if (!uniqueProducts.find(p => p.id === product.id)) {
+        uniqueProducts.push(product);
+      }
+      return uniqueProducts;
+    }, []);
+
+    res.json(products);
+  } catch (error) {
+    return res.status(400).send({ error: 'Un error en la busqueda'});
+  }
+  
+});
+
+router.get('/searchByKeyWord', async (req, res) =>{
+  const { order, search, catalogId } = req.query;
+  let products = [];
+
+  try {
+    if (catalogId !== "") {
+      products = await conn.query(`
+        SELECT p.*, cat.category_name AS category_name, cat.id AS id_category
+        FROM products p
+        LEFT JOIN catalog_products key_word ON key_word.id_product = p.id
+        LEFT JOIN catalogs c ON c.id = key_word.id_catalog
+        LEFT JOIN categories_products cp2 ON cp2.id_product = p.id
+        LEFT JOIN categories cat ON cat.id = cp2.id_category
+        WHERE p.key_word = :search
         ORDER BY p.product_name ${order === 'ASC' ? 'ASC' : 'DESC'}
       `, {
         replacements: { search },
