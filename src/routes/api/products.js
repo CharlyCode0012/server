@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-const fs = require('fs');
-const path = require('path');
 const ExcelJS = require("exceljs");
 const upload = require("../../config.js");
 
@@ -146,6 +144,7 @@ router.get("/download", async (req, res) => {
 
 router.get("/downloadWithCatalogId", async (req, res) => {
   const { catalogID } = req.query;
+  console.log("catalogID: ", catalogID,"\n\n");
   try {
     // Obtener los productos del catálogo desde la base de datos
     const productsCatalog = await CatalogProduct.findAll({ where: { id_catalog: catalogID } });
@@ -361,7 +360,7 @@ router.get('/searchByKeyWord', async (req, res) =>{
     return res.status(400).send({ error: 'Un error en la busqueda'});
   }
   
-})
+});
 
 router.post("/", async (req, res) => {
   const { categoryId, catalogId } = req.query;

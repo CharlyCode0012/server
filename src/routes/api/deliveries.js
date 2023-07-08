@@ -60,6 +60,7 @@ router.get('/', async (req, res)=>{
         
         res.json(filteredDeliveries);
     } catch (error) {
+        console.log(error);
         res.send(error);
     }
     
