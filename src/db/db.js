@@ -1,7 +1,9 @@
 const Sequelize = require("sequelize");
 
-const productModel = require("../models/product.js");
+const productModel = require("../models/product");
 const userModel = require("../models/user");
+const cartModel = require("../models/cart");
+const cartProductModel = require("../models/cart_product");
 const catalogModel = require("../models/catalog");
 const catalogProductModel = require("../models/catalog_product");
 const categoryModel = require("../models/category");
@@ -45,6 +47,8 @@ const conn = new Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
 
 const Product = productModel(conn, Sequelize);
 const User = userModel(conn, Sequelize);
+const Cart = cartModel(conn, Sequelize);
+const CartProduct  = cartProductModel(conn, Sequelize);
 const Catalog = catalogModel(conn, Sequelize);
 const CatalogProduct = catalogProductModel(conn, Sequelize);
 const Category = categoryModel(conn, Sequelize);
@@ -72,6 +76,8 @@ conn.sync({ force: false }).then(() => {
 module.exports = {
   conn,
   Answer,
+  Cart,
+  CartProduct,
   Catalog,
   CatalogProduct,
   Category,

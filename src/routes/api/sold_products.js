@@ -32,13 +32,17 @@ async function getProductSales(timePeriod, order, options = null) {
         throw new Error('Período de tiempo inválido');
     }
   
-    const optionsWhere = options 
-    ? { date_purchase: {
-      [Sequelize.Op.gte]: startDate,
-    }}
-    : { date_purchase: {
-      [Sequelize.Op.gte]: startDate,
-    }};
+    const optionsWhere = {
+      date_purchase: {
+        [Sequelize.Op.gte]: startDate,
+      },
+    };
+
+    if (options && options.category) {
+      optionsWhere['$category.category_name$'] = {
+        [Sequelize.Op.like]: `%${options.category}%`,
+      };
+    }
 
     let optionsHaving = {};
 
@@ -125,6 +129,19 @@ router.get('/searchByStock', async (req, res) => {
   }
 });
 
+router.get('/searchByCategory', async (req, res) => {
+  const { timePeriod, order, search } = req.query;
+  const options = { category: search };
+
+  try {
+    const products = await getProductSales(timePeriod, order ?? "DESC", options);
+    res.json(products);
+  } catch (error) {
+    console.error('Error al obtener los productos vendidos:', error);
+    res.status(500).json({ error: 'Error al obtener los productos vendidos' });
+  }
+});
+
 
 router.post('/', async (req, res)=>{
     try {
@@ -150,6 +167,7 @@ router.put('/:soldProdId', async (req, res)=>{
         res.json({success: `se ha modificado ${soldProdId}`});
     } catch (error) {
         res.status(400).send("Error");
+        console.log(error);
     }
 })
 

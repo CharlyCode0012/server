@@ -193,9 +193,9 @@ router.put("/:userId", async (req, res) => {
   
     // Check if cellphone repeats
     const cel = req.body.cel;
-    const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
+    const cellphoneAlreadyTaken = await User.findOne({ where: { cel: cel } });
   
-    if (cellphoneAlreadyTaken) 
+    if (cellphoneAlreadyTaken && cellphoneAlreadyTaken.id !== userId) 
       return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
   
     // Everything OK, update user

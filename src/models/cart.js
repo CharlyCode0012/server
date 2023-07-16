@@ -1,24 +1,27 @@
-module.exports = (sequelize, type) =>{
-    return sequelize.define('cart', {
-        id:{
-            type: type.STRING(50),
-            primaryKey: true,
-            autoIncrement: false
+module.exports = (sequelize, type) => {
+    const Cart = sequelize.define('cart', {
+      id: {
+        type: type.STRING(100),
+        primaryKey: true,
+        autoIncrement: false
+      },
+      id_client: {
+        type: type.STRING(20),
+        references: {
+          model: 'clients',
+          key: 'number'
         },
-
-        name:{
-            type: type.STRING(80),
-            allowNull: false
-        },
-
-        description:{
-            type: type.TEXT('tiny'),
-            allowNull: false
-        },
-
-        state:{
-            type: type.BOOLEAN,
-            allowNull: false
-        }
+        onDelete: 'cascade'
+      },
+      total_price: {
+        type: type.DOUBLE
+      }
     });
-}
+  
+    Cart.associate = (models) => {
+      Cart.hasMany(models.CartProduct, { foreignKey: 'id_cart' });
+    };
+  
+    return Cart;
+  };
+  

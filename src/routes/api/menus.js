@@ -1,5 +1,6 @@
 const socketIO = require("socket.io");
 const router = require("express").Router();
+const { Op } = require("sequelize");
 
 const { Menu } = require("../../db/db");
 const ExcelJS = require("exceljs");
@@ -48,8 +49,37 @@ router.use((req, res, next) => {
 });
 
 router.get("/", async (req, res) => {
+  const { order } = req.query;
   try {
-    const menus = await Menu.findAll();
+    const menus = await Menu.findAll({
+      order: [["principalMenu", "DESC"], ["name", order === "ASC" ? "ASC" : "DESC"]],
+    });
+    res.json(menus);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+});
+
+router.get("/searchWithName", async (req, res) => {
+  const { order, search } = req.query;
+  try {
+    const menus = await Menu.findAll({
+      where: { name: { [Op.like]: `%${search}%` } },
+      order: [["name", order === "ASC" ? "ASC" : "DESC"]],
+    });
+    res.json(menus);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+});
+
+router.get("/searchWithText", async (req, res) => {
+  const { order, search } = req.query;
+  try {
+    const menus = await Menu.findAll({
+      where: { answer: { [Op.like]: `%${search}%` } },
+      order: [["name", order === "ASC" ? "ASC" : "DESC"]],
+    });
     res.json(menus);
   } catch (error) {
     res.status(400).json(error);
@@ -60,7 +90,7 @@ router.get("/withID", async (req, res) => {
   const { menuID } = req.query;
 
   try {
-    const menu = await Menu.findOne({where: {id: menuID}});
+    const menu = await Menu.findOne({ where: { id: menuID } });
     res.json(menu);
   } catch (error) {
     res.status(400).json(error);
@@ -87,6 +117,14 @@ router.get("/download", async (req, res) => {
       { header: "Título", key: "name", width: 25 },
       { header: "Respuesta", key: "answer", width: 25 },
     ];
+
+    const idColumnIndex = worksheet.getColumn("id").number;
+    const idColumnCells = worksheet.getColumn(idColumnIndex);
+    idColumnCells.eachCell((cell) => {
+      cell.protection = {
+        locked: true,
+      };
+    });
 
     // Style each column
     const idColumn = worksheet.getColumn("id"),
@@ -189,6 +227,7 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
           id: Date.now().toString(),
           name: menu.name,
           answer: menu.answer,
+          principalMenu: 0,
         });
     }
 

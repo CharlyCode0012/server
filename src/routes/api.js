@@ -3,6 +3,7 @@ const socketIO = require('socket.io-client');
 
 
 const apiAnswersRouter = require('./api/answers');
+const apiCart = require('./api/cart');
 const apiCatalogsRouter = require('./api/catalogs');
 const apiCatalogPrRouter  = require('./api/catalog_products');
 const apiCategoriesRouter = require('./api/categories');
@@ -24,6 +25,7 @@ const apiDeliveryRouter = require('./api/deliveries');
 
 
 router.use('/answers', apiAnswersRouter);
+router.use('/cart', apiCart);
 router.use('/catalogs', apiCatalogsRouter);
 router.use('/catalog_products', apiCatalogPrRouter);
 router.use('/categories', apiCategoriesRouter);

@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const socketIO = require("socket.io");
+const { Op } = require("sequelize");
 
 const { MenuOptions, MenuAndOptions, Catalog, Menu } = require("../../db/db");
 const ExcelJS = require("exceljs");
@@ -48,7 +49,7 @@ router.use((req, res, next) => {
 });
 
 router.get("/", async (req, res) => {
-  const { menuID } = req.query;
+  const { menuID, order } = req.query;
   try {
     const menuOptions = await MenuAndOptions.findAll({
       where: { menuID: menuID },
@@ -102,6 +103,82 @@ router.get("/", async (req, res) => {
         referenceName: referenceName,
       };
     });
+
+    if (order === "ASC") {
+      options.sort((a, b) => b.option.localeCompare(a.option));
+    } else {
+      options.sort((a, b) => a.option.localeCompare(b.option));
+    }
+
+    res.json(options);
+  } catch (error) {
+    console.error(error);
+    res.status(400).send("Error al traer");
+  }
+});
+
+router.get("/searchByKeyWord", async (req, res) => {
+  const { menuID, search, order } = req.query;
+  try {
+    const menuOptions = await MenuAndOptions.findAll({
+      where: { menuID: menuID },
+      include: [
+        {
+          model: MenuOptions,
+          as: "menuOption", // Especifica el alias correcto aquí
+          where: { keywords: { [Op.like]: `%${search}%` } },
+          attributes: [
+            "id",
+            "answer",
+            "option",
+            "keywords",
+            "action_type",
+            "reference",
+          ],
+          include: [
+            {
+              model: Catalog,
+              attributes: ["name"],
+              as: "catalog",
+            },
+            {
+              model: Menu,
+              attributes: ["name"],
+              as: "submenu",
+            },
+          ],
+        },
+      ],
+    });
+
+    const options = menuOptions.map((menuOption) => {
+      const resolvedMenuOption = menuOption.menuOption;
+      const typeAction = resolvedMenuOption.action_type;
+      const reference = resolvedMenuOption.reference;
+      let referenceName = "";
+
+      if (typeAction === "catalog" && resolvedMenuOption.catalog) {
+        referenceName = resolvedMenuOption.catalog.name;
+      } else if (typeAction === "Submenu" && resolvedMenuOption.submenu) {
+        referenceName = resolvedMenuOption.submenu.name;
+      }
+
+      return {
+        id: resolvedMenuOption.id,
+        answer: resolvedMenuOption.answer,
+        option: resolvedMenuOption.option,
+        keywords: resolvedMenuOption.keywords,
+        action_type: typeAction,
+        reference: reference,
+        referenceName: referenceName,
+      };
+    });
+
+    if (order === "ASC") {
+      options.sort((a, b) => b.option.localeCompare(a.option));
+    } else {
+      options.sort((a, b) => a.option.localeCompare(b.option));
+    }
 
     res.json(options);
   } catch (error) {
@@ -344,7 +421,7 @@ router.put("/", async (req, res) => {
     await MenuOptions.update(req.body, {
       where: { id: menuResId },
     });
-    
+
     const updatedMenuOptionRes = await MenuOptions.findByPk(menuResId); // Obtener el objeto MenuOptions actualizado
 
     const typeAction = req.body.action_type;

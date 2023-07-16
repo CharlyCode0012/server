@@ -9,6 +9,10 @@ module.exports = (sequelize, type) =>{
             type: type.STRING(100),
             allowNUll: false
         },
+        description: {
+            type: type.STRING(100),
+            allowNUll: false 
+        },
         state:{
             type: type.BOOLEAN,
             allowNUll: false

@@ -32,7 +32,16 @@ module.exports = (sequelize, type) =>{
                 key: 'id'
             },
             onDelete: 'cascade',
-        }
+        },
+        
+        id_order: {
+            type: type.INTEGER, // Asegúrate de utilizar el tipo de dato correcto para la columna id_order
+            references: {
+              model: 'orders',
+              key: 'id'
+            },
+            onDelete: 'cascade'
+          }
     });
 }
 //ORM -> servidor mysql y backend

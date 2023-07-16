@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const { QueryTypes, Op } = require('sequelize');
-const {conn, Order, Delivery} = require('../../db/db');
+const {conn, Order, Delivery, OrderDetails} = require('../../db/db');
 
 router.get('/', async (req, res)=>{
     const order = req.query.order ?? "ASC";
