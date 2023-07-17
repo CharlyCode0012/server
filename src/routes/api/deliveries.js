@@ -456,7 +456,9 @@ router.get("/searchByClientNumber", async (req, res) => {
       (delivery, index, self) => {
         // Filtrar el primer elemento con el mismo folio encontrado
         return (
-          delivery !== null && self.findIndex((d) => d !== null && d.folio === delivery.folio) === index
+          delivery !== null &&
+          self.findIndex((d) => d !== null && d.folio === delivery.folio) ===
+            index
         );
       }
     );
@@ -517,7 +519,9 @@ router.get("/searchByPlace", async (req, res) => {
       (delivery, index, self) => {
         // Filtrar el primer elemento con el mismo folio encontrado
         return (
-          delivery !== null && self.findIndex((d) => d !== null && d.folio === delivery.folio) === index
+          delivery !== null &&
+          self.findIndex((d) => d !== null && d.folio === delivery.folio) ===
+            index
         );
       }
     );
@@ -580,7 +584,7 @@ router.put("/id/:deliveryId", async (req, res) => {
           id_product: { [Op.notIn]: productIdList },
         },
       });
-      
+
       const newSoldProducts = await Promise.all(
         productIdList
           .filter(
@@ -596,7 +600,9 @@ router.put("/id/:deliveryId", async (req, res) => {
             const categoriesProduct = await CategoryProd.findOne({
               where: { id_product: productId },
             });
-            const id_category = categoriesProduct ? categoriesProduct.id_category : null;
+            const id_category = categoriesProduct
+              ? categoriesProduct.id_category
+              : null;
             return {
               id_order: order.id,
               id_product: productId,
@@ -606,10 +612,16 @@ router.put("/id/:deliveryId", async (req, res) => {
             };
           })
       );
-      
+
       if (newSoldProducts.length > 0) {
         await SoldProd.bulkCreate(newSoldProducts, {
-          fields: ["id_order", "id_product", "id_category", "date_purchase", "quantity"],
+          fields: [
+            "id_order",
+            "id_product",
+            "id_category",
+            "date_purchase",
+            "quantity",
+          ],
         });
       }
 
@@ -636,8 +648,8 @@ router.put("/id/:deliveryId", async (req, res) => {
       const existingShoppingRecords = await Shopping.findAll({
         where: {
           id_order: order.id,
-          id_product: { [Op.notIn]: productIdList }
-        }
+          id_product: { [Op.notIn]: productIdList },
+        },
       });
 
       const newShoppingRecords = productIdList
@@ -656,14 +668,13 @@ router.put("/id/:deliveryId", async (req, res) => {
             id_product: productId,
             date_purchase: new Date(),
             quantity: orderDetail ? orderDetail.quantity : 0,
-            id_client: order.id_client
+            id_client: order.id_client,
           };
         });
 
       if (newShoppingRecords.length > 0) {
         await Shopping.bulkCreate(newShoppingRecords);
       }
-
     }
 
     res.json({ success: `Se ha modificado la entrega ${deliveryId}` });
@@ -698,6 +709,10 @@ router.put("/folio/:deliveryFolio", async (req, res) => {
     }
 
     await Delivery.update(updatedDelivery, {
+      where: { folio: deliveryFolio },
+    });
+
+    await Order.update(updatedDelivery, {
       where: { folio: deliveryFolio },
     });
 
