@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const fs = require("fs");
 const {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand
 } = require("@aws-sdk/client-s3");
 
 // Configuración de las credenciales de AWS
@@ -22,7 +24,7 @@ const s3Client = new S3Client({
   },
 });
 
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage();
 
 const upload = multer({
   storage,
@@ -40,6 +42,62 @@ const upload = multer({
     }
   },
 });
+
+async function downloadFile(filename) {
+  const s3Params = {
+    Bucket: "databot12",
+    Key: filename,
+  };
+
+  try {
+    // Verifica si el archivo existe en S3
+    await s3Client.send(new HeadObjectCommand(s3Params));
+
+    // Si el archivo existe, descárgalo y guárdalo en la ruta especificada
+    const command = await s3Client.send(new GetObjectCommand(s3Params));
+    const fileContent = command.Body;
+
+    // Ruta donde deseas guardar el archivo
+    const filePath = `uploads/imagenes/${filename}`;
+
+    fs.writeFile(filePath, fileContent, (err) => {
+      if (err) {
+        console.error("Error al guardar el archivo en el sistema de archivos:", err);
+        // Manejar el error en caso de que ocurra
+      } else {
+        console.log("Archivo descargado y guardado exitosamente.");
+      }
+    });
+  } catch (error) {
+    // Si el archivo no existe, descarga la imagen por defecto y guárdala
+    console.error("Error al descargar el archivo desde S3:", error);
+    const defaultImageName = "default.jpg"; // Nombre de la imagen por defecto en S3
+    const defaultImagePath = `uploads/imagenes/${defaultImageName}`;
+
+    // Descarga la imagen por defecto desde S3 y guárdala en la ruta especificada
+    const s3DefaultParams = {
+      Bucket: "databot12",
+      Key: defaultImageName,
+    };
+
+    try {
+      const defaultCommand = await s3Client.send(new GetObjectCommand(s3DefaultParams));
+      const defaultFileContent = defaultCommand.Body;
+
+      fs.writeFile(defaultImagePath, defaultFileContent, (err) => {
+        if (err) {
+          console.error("Error al guardar la imagen por defecto en el sistema de archivos:", err);
+        } else {
+          console.log("Imagen por defecto descargada y guardada exitosamente.");
+        }
+      });
+    } catch (defaultError) {
+      console.error("Error al descargar la imagen por defecto desde S3:", defaultError);
+      // Manejar el error en caso de que ocurra
+    }
+  }
+}
+
 
 // Ruta para cargar imágenes en Amazon S3
 router.post("/", upload.single("image"), async (req, res) => {
@@ -69,23 +127,24 @@ router.post("/", upload.single("image"), async (req, res) => {
 // Ruta para entregar imágenes desde Amazon S3
 router.get("/:imageName", async (req, res) => {
   const { imageName } = req.params;
-  const imagePath = `${imageName}.jpg`;
-
-  const s3Params = {
-    Bucket: "databot12", // Reemplaza "databot12" con el nombre de tu bucket en Amazon S3
-    Key: imagePath,
-  };
+  const imagePath = `./uploads/img/products/${imageName}.jpg`;
 
   try {
-    const command = await s3Client.send(new GetObjectCommand({Bucket: "databot12", Key: imagePath}));
-    
-    res.send(command);
+    // Verificar si el archivo ya existe localmente en la ruta "uploads/imagenes"
+    if (fs.existsSync(imagePath)) {
+      // Si el archivo existe, enviarlo como respuesta
+      res.sendFile(imagePath);
+    } else {
+      // Si el archivo no existe, descargarlo y luego enviarlo como respuesta
+      await downloadFile(`${imageName}.jpg`);
+      res.sendFile(imagePath);
+    }
   } catch (error) {
-    // Si la imagen solicitada no existe, redirige a la imagen por defecto
-    const command = await s3Client.send(new GetObjectCommand({Bucket: "databot12", Key: "default.jpg"}));
-    res.send(command);
+    console.error("Error al enviar el archivo al cliente:", error);
+    res.status(400).send("Error");
   }
 });
+
 
 router.get("/", (req, res) => {
   res.json({ img: "send image" });
