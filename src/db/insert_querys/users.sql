@@ -9,4 +9,4 @@ VALUES
     ('7', 'Usuario 7', '1990-07-01', 'ayudante', 'usuario7@example.com', 'pass123', '1234567897', NOW(), NOW()),
     ('8', 'Usuario 8', '1990-08-01', 'ayudante', 'usuario8@example.com', 'pass123', '1234567898', NOW(), NOW()),
     ('9', 'Usuario 9', '1990-09-01', 'ayudante', 'usuario9@example.com', 'pass123', '1234567899', NOW(), NOW()),
-    ('10', 'Carlos', '2003-01-17', 'vendedor', 'charly.code0012@gmail.com', '0906Gean.0906', '1234567890', NOW(), NOW());
+    ('10', 'Carlos', '2003-01-17', 'vendedor', 'charly.code0012@gmail.com', '0906Gean.0906', '33-1551-5625', NOW(), NOW());
