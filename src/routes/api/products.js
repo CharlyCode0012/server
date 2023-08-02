@@ -394,7 +394,7 @@ router.post("/", async (req, res) => {
       });
       await CategoryProd.create({
         id_product: productId,
-        id_catalog: categoryId,
+        id_category: categoryId,
       });
 
       res.json(product);

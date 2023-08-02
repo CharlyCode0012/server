@@ -1,9 +1,16 @@
 const router = require("express").Router();
 
 const { QueryTypes, Op } = require("sequelize");
-const { conn, Order, Delivery, OrderDetails, Product, PlaceDelivery } = require("../../db/db");
-OrderDetails.belongsTo(Product, { foreignKey: 'id_product' });
-
+const {
+  conn,
+  Order,
+  Delivery,
+  OrderDetails,
+  Product,
+  PlaceDelivery,
+  Client,
+} = require("../../db/db");
+OrderDetails.belongsTo(Product, { foreignKey: "id_product" });
 
 router.get("/", async (req, res) => {
   const order = req.query.order ?? "ASC";
@@ -158,6 +165,19 @@ router.post("/", async (req, res) => {
   const { clientId } = req.query;
 
   try {
+    let client = await Client.findByPk(clientId);
+
+    // If the client doesn't exist, create a new client
+    if (!client) {
+      client = await Client.create({
+        // Add necessary properties for client creation based on the request data
+        // For example:
+        number: clientId,
+        purcharses: 0,
+        // ... and other properties
+      });
+    }
+
     const order = await Order.create({
       folio: folio, // Genera un número de folio único para la orden (puedes implementar tu propia lógica aquí)
       date_order: new Date(),
@@ -179,6 +199,15 @@ router.post("/", async (req, res) => {
         id_product: product.id,
       };
     });
+
+    for (const product of cart.products) {
+      const { id, quantity } = product;
+      const productToUpdate = await Product.findByPk(id);
+      if (productToUpdate) {
+        const newStock = productToUpdate.stock - quantity;
+        await productToUpdate.update({ stock: newStock });
+      }
+    }
 
     await OrderDetails.bulkCreate(orderDetails);
 

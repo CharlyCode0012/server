@@ -11,7 +11,7 @@ module.exports = (sequelize, type) => {
     },
 
     date_order: {
-      type: type.DATEONLY
+      type: type.DATE
     },
     date_delivery: {
       type: type.DATEONLY
