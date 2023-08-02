@@ -1,66 +1,94 @@
 const express = require("express");
 const router = express.Router();
-const path = require("path");
 const multer = require("multer");
-const fs = require("fs");
+const {
+  S3Client,
+  PutObjectCommand,
+  HeadObjectCommand,
+} = require("@aws-sdk/client-s3");
 
-const PATH_IMG_PRODUCT = 'uploads/img/products';
+// Configuración de las credenciales de AWS
+const awsConfig = {
+  accessKeyId: "AKIAWVXP2LLB42GSXBCP",
+  secretAccessKey: "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",
+  region: "us-west-1", // Por ejemplo, "us-east-1"
+};
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'src/routes/api/uploads/img/products');
+const s3Client = new S3Client({
+  region: awsConfig.region,
+  credentials: {
+    accessKeyId: awsConfig.accessKeyId,
+    secretAccessKey: awsConfig.secretAccessKey,
   },
-  filename: (req, file, cb) => {
-    const fileName = file.originalname;
-    const lastDotIndex = fileName.lastIndexOf('.');
-    //const name = fileName.slice(0, lastDotIndex);
-    const extension = fileName.slice(lastDotIndex + 1);
-    const id = req.query.id_product ?? Date.now();
-    const name = `${id}.${extension}`;
-
-    cb(null, name);
-  }
 });
+
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
 
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Formato de imagen no válido. Se permiten archivos JPEG y PNG.'));
+      cb(
+        new Error(
+          "Formato de imagen no válido. Se permiten archivos JPEG y PNG."
+        )
+      );
     }
-  }
+  },
 });
 
-// Ruta para cargar imágenes
+// Ruta para cargar imágenes en Amazon S3
 router.post("/", upload.single("image"), async (req, res) => {
   const { id_product } = req.query;
 
-  res.json({image_url: id_product});
+  const fileContent = req.file.buffer;
+  const extension = req.file.originalname.split(".").pop();
+  const fileName = `${id_product}.${extension}`;
+  const s3Params = {
+    Bucket: "databot12",
+    Key: fileName,
+    Body: fileContent,
+    ContentType: req.file.mimetype,
+    ACL: "public-read", // Si deseas que las imágenes sean públicas y accesibles sin autenticación
+  };
+
+  try {
+    await s3Client.send(new PutObjectCommand(s3Params));
+    const imageUrl = `https://${s3Params.Bucket}.s3.amazonaws.com/${fileName}`;
+    res.json({ image_url: imageUrl });
+  } catch (error) {
+    res.status(500).json({ error: "Error al cargar la imagen a S3" });
+  }
 });
 
-// Ruta para entregar imágenes
-router.get("/:imageName", (req, res) => {
+// Ruta para entregar imágenes desde Amazon S3
+router.get("/:imageName", async (req, res) => {
   const { imageName } = req.params;
-  const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, imageName).concat('.jpg');
+  const imagePath = `${imageName}.jpg`;
 
+  const s3Params = {
+    Bucket: "databot12", // Reemplaza "databot12" con el nombre de tu bucket en Amazon S3
+    Key: imagePath,
+  };
 
-  // Verificar si el archivo existe
-  if (fs.existsSync(imagePath)) {
-    // Si el archivo existe, enviarlo como respuesta
-    res.sendFile(imagePath);
-  } else {
-    // Si el archivo no existe, enviar la imagen por defecto
-    const defaultImagePath = path.join(__dirname, PATH_IMG_PRODUCT, "default.jpg");
-    res.sendFile(defaultImagePath);
+  try {
+    await s3Client.send(new HeadObjectCommand(s3Params));
+    const imageUrl = `https://${s3Params.Bucket}.s3.amazonaws.com/${imagePath}`;
+    res.redirect(imageUrl);
+  } catch (error) {
+    // Si la imagen solicitada no existe, redirige a la imagen por defecto
+    const defaultImageUrl =
+      "https://${s3Params.Bucket}.s3.amazonaws.com/defualt.jp";
+    res.redirect(defaultImageUrl);
   }
 });
 
 router.get("/", (req, res) => {
-  res.json({img: "send image"});
+  res.json({ img: "send image" });
 });
 
 module.exports = router;
