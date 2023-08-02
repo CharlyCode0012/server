@@ -9,8 +9,8 @@ const {
 
 // Configuración de las credenciales de AWS
 const awsConfig = {
-  accessKeyId: "AKIAWVXP2LLB42GSXBCP",
-  secretAccessKey: "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",
+  accessKeyId: "AKIAWVXP2LLB2CGRD6P6",
+  secretAccessKey: "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",
   region: "us-west-1", // Por ejemplo, "us-east-1"
 };
 
