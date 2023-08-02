@@ -45,8 +45,7 @@ router.post("/", upload.single("image"), async (req, res) => {
 // Ruta para entregar imágenes
 router.get("/:imageName", (req, res) => {
   const { imageName } = req.params;
-  const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, imageName).concat('.jpg');
-
+  const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, imageName);
 
   // Verificar si el archivo existe
   if (fs.existsSync(imagePath)) {

@@ -52,7 +52,7 @@ async function getProductsClient(clientId, timePeriod) {
         },
       ],
       where: optionsWhere,
-      group: ['id_product', 'shopping.date_purchase'], // Incluir shopping.date_purchase en el grupo
+      group: ['id_product', 'shopping.date_purchase', 'shopping.id'], // Incluir shopping.id en el grupo
       raw: true,
     });
 
