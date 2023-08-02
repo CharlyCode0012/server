@@ -4,7 +4,7 @@ const multer = require("multer");
 const {
   S3Client,
   PutObjectCommand,
-  HeadObjectCommand,
+  GetObjectCommand,
 } = require("@aws-sdk/client-s3");
 
 // Configuración de las credenciales de AWS
@@ -61,6 +61,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     const imageUrl = `https://${s3Params.Bucket}.s3.amazonaws.com/${fileName}`;
     res.json({ image_url: imageUrl });
   } catch (error) {
+    console.error("Error al cargar la imagen a S3:", error);
     res.status(500).json({ error: "Error al cargar la imagen a S3" });
   }
 });
@@ -76,14 +77,13 @@ router.get("/:imageName", async (req, res) => {
   };
 
   try {
-    await s3Client.send(new HeadObjectCommand(s3Params));
-    const imageUrl = `https://${s3Params.Bucket}.s3.amazonaws.com/${imagePath}`;
-    res.redirect(imageUrl);
+    const command = await s3Client.send(new GetObjectCommand({Bucket: "databot12", Key: imagePath}));
+    
+    res.send(command);
   } catch (error) {
     // Si la imagen solicitada no existe, redirige a la imagen por defecto
-    const defaultImageUrl =
-      "https://${s3Params.Bucket}.s3.amazonaws.com/defualt.jp";
-    res.redirect(defaultImageUrl);
+    const command = await s3Client.send(new GetObjectCommand({Bucket: "databot12", Key: "default.jpg"}));
+    res.send(command);
   }
 });
 
