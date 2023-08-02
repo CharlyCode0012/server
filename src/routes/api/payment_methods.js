@@ -29,54 +29,74 @@ router.get("/", async (req, res) => {
  */
 router.get("/download", async (req, res) => {
 
-  // Get payment methods from DB
-  const paymentMethodsQuery = await Payment.findAll()
-  const paymentMethods = JSON.parse(JSON.stringify(paymentMethodsQuery))
+  try {
+    // Get payment methods from DB
+    const paymentMethodsQuery = await Payment.findAll()
+    const paymentMethods = JSON.parse(JSON.stringify(paymentMethodsQuery))
+  
+    // Create excel workbook, where sheets will be stored
+    const workbook = new ExcelJS.Workbook();
+  
+    // Create a sheet and assign to it some columns metadata to insert rows
+    const worksheet = workbook.addWorksheet("Lugares de entrega")
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 20 },
+      { header: "Titular", key: "name", width: 25 },
+      { header: "CLABE", key: "CLABE", width: 25 },
+      { header: "No. Tarjeta", key: "no_card", width: 25 },
+      { header: "Banco", key: "bank", width: 25 },
+      { header: "Lugares para depositar", key: "subsidary", width: 30 },
+    ]
+  
+    // Style each column
+    const idColumn = worksheet.getColumn("id"),
+          ownerColumn = worksheet.getColumn("name"),
+          clabeColumn = worksheet.getColumn("CLABE"),
+          cardNumberColumn = worksheet.getColumn("no_card"),
+          bankColumn = worksheet.getColumn("bank"),
+          subsidaryColumn = worksheet.getColumn("subsidary");
+  
+    const alignment = { horizontal: "center" };
+  
+    idColumn.alignment = alignment
+    ownerColumn.alignment = alignment
+    clabeColumn.alignment = alignment
+    cardNumberColumn.alignment = alignment
+    bankColumn.alignment = alignment
+    subsidaryColumn.alignment = alignment
+  
+    // Style header row
+    const headerRow = worksheet.getRow(1)
+    headerRow.font = { bold: true, size: 14 };
+  
+    // Add data of every payment method
+    for (const paymentMethod of paymentMethods)
+      worksheet.addRow(paymentMethod);
+    
+    // Auto-size columns to fit the content and headers
+    worksheet.columns.forEach((column) => {
+      column.header = column.header.toString(); // Convert header to string
+      column.width = Math.max(column.header.length, 12); // Set minimum width based on header length
 
-  // Create excel workbook, where sheets will be stored
-  const workbook = new ExcelJS.Workbook();
+      column.eachCell({ includeEmpty: true }, (cell) => {
+          cell.alignment = { 
+          vertical: "middle", 
+          horizontal: "center",
+          wrapText: true // Enable text wrapping
+      };
+      column.width = Math.max(column.width, cell.value ? cell.value.toString().length + 2 : 10); // Adjust width based on cell content
+      });
+  });
 
-  // Create a sheet and assign to it some columns metadata to insert rows
-  const worksheet = workbook.addWorksheet("Lugares de entrega")
-  worksheet.columns = [
-    { header: "ID", key: "id", width: 20 },
-    { header: "Titular", key: "name", width: 25 },
-    { header: "CLABE", key: "CLABE", width: 25 },
-    { header: "No. Tarjeta", key: "no_card", width: 25 },
-    { header: "Banco", key: "bank", width: 25 },
-    { header: "Lugares para depositar", key: "subsidary", width: 30 },
-  ]
-
-  // Style each column
-  const idColumn = worksheet.getColumn("id"),
-        ownerColumn = worksheet.getColumn("name"),
-        clabeColumn = worksheet.getColumn("CLABE"),
-        cardNumberColumn = worksheet.getColumn("no_card"),
-        bankColumn = worksheet.getColumn("bank"),
-        subsidaryColumn = worksheet.getColumn("subsidary");
-
-  const alignment = { horizontal: "center" };
-
-  idColumn.alignment = alignment
-  ownerColumn.alignment = alignment
-  clabeColumn.alignment = alignment
-  cardNumberColumn.alignment = alignment
-  bankColumn.alignment = alignment
-  subsidaryColumn.alignment = alignment
-
-  // Style header row
-  const headerRow = worksheet.getRow(1)
-  headerRow.font = { bold: true, size: 14 };
-
-  // Add data of every payment method
-  for (const paymentMethod of paymentMethods)
-    worksheet.addRow(paymentMethod)
-
-  const fileBuffer = await workbook.xlsx.writeBuffer();
-
-  res.setHeader('content-disposition', 'attachment; filename="Metodos de pago.xlsx"');
-  res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
-  res.status(200).end(fileBuffer);
+  
+    const fileBuffer = await workbook.xlsx.writeBuffer();
+  
+    res.setHeader('content-disposition', 'attachment; filename="Metodos de pago.xlsx"');
+    res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
+    res.status(200).end(fileBuffer);
+  } catch (error) {
+    res.status(400).send("Error al descargar el archivo");
+  }
 });
 
 /**
@@ -186,8 +206,12 @@ router.get("/searchByBank", async (req, res) => {
  * Creates a new payment method in the DB
  */
 router.post("/", async (req, res) => {
-  const paymentMethod = await Payment.create(req.body);
-  res.json(paymentMethod);
+  try {
+    const paymentMethod = await Payment.create(req.body);
+    res.json(paymentMethod);  
+  } catch (error) {
+    res.status(400).send("Error");
+  }
 });
 
 /**
@@ -197,66 +221,76 @@ router.post("/", async (req, res) => {
  */
 router.post("/upload", upload.single("excel_file"), async (req, res) => {
   const file = req.file
-
-  // Create excel info getter
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(file.path)
-  const worksheet = workbook.getWorksheet(1);
   
-  // Get every paymentMethod from the excel
-  const paymentMethods = []
-  worksheet.eachRow(function(row, rowNumber) {
-    if (rowNumber === 1) return
-
-    const [, id, owner, clabe, cardNumber, bank, subsidary] = row.values
-
-    paymentMethods.push({
-      id,
-      name: owner,
-      CLABE: clabe,
-      no_card: cardNumber,
-      bank,
-      subsidary,
-    })
-  });
-
-  // BUG: If validation is needed, it should go here
-  
-  // For every payment method, add it if ID not found, or update it if found
-  for (const paymentMethod of paymentMethods) {
+  try {
+    // Create excel info getter
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(file.path)
+    const worksheet = workbook.getWorksheet(1);
     
-    if (paymentMethod.id !== undefined) // Method indeed exists, update its info
-      await Payment.update(paymentMethod, {
-        where: { id: paymentMethod.id },
-      });
-
-    else // Method didn't exist, create a new one
-      await Payment.create({ 
-        id: Date.now().toString(),
-        name: paymentMethod.name, 
-        CLABE: paymentMethod.CLABE,
-        no_card: paymentMethod.no_card,
-        bank: paymentMethod.bank,
-        subsidary: paymentMethod.subsidary
-      });
+    // Get every paymentMethod from the excel
+    const paymentMethods = []
+    worksheet.eachRow(function(row, rowNumber) {
+      if (rowNumber === 1) return
+  
+      const [, id, owner, clabe, cardNumber, bank, subsidary] = row.values
+  
+      paymentMethods.push({
+        id,
+        name: owner,
+        CLABE: clabe,
+        no_card: cardNumber,
+        bank,
+        subsidary,
+      })
+    });
+  
+    // BUG: If validation is needed, it should go here
+    
+    // For every payment method, add it if ID not found, or update it if found
+    for (const paymentMethod of paymentMethods) {
+      
+      if (paymentMethod.id !== undefined) // Method indeed exists, update its info
+        await Payment.update(paymentMethod, {
+          where: { id: paymentMethod.id },
+        });
+  
+      else // Method didn't exist, create a new one
+        await Payment.create({ 
+          id: Date.now().toString(),
+          name: paymentMethod.name, 
+          CLABE: paymentMethod.CLABE,
+          no_card: paymentMethod.no_card,
+          bank: paymentMethod.bank,
+          subsidary: paymentMethod.subsidary
+        });
+    }
+  
+    res.sendStatus(200);
+    
+  } catch (error) {
+    res.status(400).send("Error al actualizar desde el archivo enviado");
   }
-
-  res.sendStatus(200);
-});
-
-/**
- * Updates a payment method in the DB
- */
-router.put("/:methodId", async (req, res) => {
-  const { methodId } = req.params;
-  const isFind = await Payment.findOne({ where: { id: methodId } });
-
-  if (!isFind) return res.status(404).send("Metodo de pago no encontrado");
-
-  await Payment.update(req.body, {
-    where: { id: methodId },
   });
-  res.json({ success: `se ha modificado ${methodId}` });
+  
+  /**
+   * Updates a payment method in the DB
+   */
+  router.put("/:methodId", async (req, res) => {
+    const { methodId } = req.params;
+    try {
+      const isFind = await Payment.findOne({ where: { id: methodId } });
+    
+      if (!isFind) return res.status(404).send("Metodo de pago no encontrado");
+    
+      await Payment.update(req.body, {
+        where: { id: methodId },
+      });
+      res.json({ success: `se ha modificado ${methodId}` });
+      
+    } catch (error) {
+      res.status(400).send("Error al actualizar");
+    }
 });
 
 /**
@@ -264,12 +298,16 @@ router.put("/:methodId", async (req, res) => {
  */
 router.delete("/:methodId", async (req, res) => {
   const { methodId } = req.params;
-  const isFind = await Payment.findOne({ where: { id: methodId } });
-
-  if (!isFind) return res.status(404).send("Metodo de pago no encontrado");
-
-  await Payment.destroy({ where: { id: methodId } });
-  res.status(200).send();
+  try {
+    const isFind = await Payment.findOne({ where: { id: methodId } });
+  
+    if (!isFind) return res.status(404).send("Metodo de pago no encontrado");
+  
+    await Payment.destroy({ where: { id: methodId } });
+    res.status(200).send();
+  } catch (error) {
+    res.status(400).send("Error al eliminar");
+  }
 });
 
 module.exports = router;

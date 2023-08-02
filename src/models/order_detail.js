@@ -1,5 +1,5 @@
 module.exports = (sequelize, type) =>{
-    return sequelize.define('order_detail', {
+    const OrderDetail = sequelize.define('order_detail', {
         id:{
             type: type.INTEGER,
             primaryKey: true,
@@ -11,6 +11,10 @@ module.exports = (sequelize, type) =>{
         },
 
         price:{
+            type: type.DOUBLE,
+        },
+
+        total_price:{
             type: type.DOUBLE,
         },
 
@@ -32,4 +36,6 @@ module.exports = (sequelize, type) =>{
             onDelete: 'cascade',
         },
     })
+
+    return OrderDetail;
 }

@@ -8,5 +8,5 @@ VALUES
     ('5', CONCAT('33', LPAD(FLOOR(RAND() * 10000000), 7, '0'), LPAD(FLOOR(RAND() * 1000), 3, '0')), 0, NOW(), NOW()),
     ('6', CONCAT('33', LPAD(FLOOR(RAND() * 10000000), 7, '0'), LPAD(FLOOR(RAND() * 1000), 3, '0')), 0, NOW(), NOW()),
     ('7', CONCAT('33', LPAD(FLOOR(RAND() * 10000000), 7, '0'), LPAD(FLOOR(RAND() * 1000), 3, '0')), 0, NOW(), NOW()),
-    ('8', CONCAT('33', LPAD(FLOOR(RAND() * 10000000), 7, '0'), LPAD(FLOOR(RAND() * 1000), 3, '0')), 0, NOW(), NOW());
-    //('9', '3325248063', 2, NOW(), NOW());
+    ('8', CONCAT('33', LPAD(FLOOR(RAND() * 10000000), 7, '0'), LPAD(FLOOR(RAND() * 1000), 3, '0')), 0, NOW(), NOW()),
+    ('9', '3325248063', 2, NOW(), NOW());

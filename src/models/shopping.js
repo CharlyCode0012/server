@@ -30,7 +30,15 @@ module.exports = (sequelize, type) =>{
                 key: 'number'
             },
             onDelete: 'cascade',
-        }
+        },
+        id_order: {
+            type: type.INTEGER,
+            references: {
+              model: 'orders',
+              key: 'id'
+            },
+            onDelete: 'cascade'
+          }
         
     })
 }

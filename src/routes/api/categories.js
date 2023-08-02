@@ -1,5 +1,7 @@
 const router = require("express").Router();
+
 const ExcelJS = require("exceljs")
+const upload = require("../../config.js");
 
 const { Category } = require("../../db/db");
 
@@ -24,42 +26,61 @@ router.get("/", async (req, res) => {
 router.get("/download", async (req, res) => {
 
   // Get categories from DB
-  const categoriesQuery = await Category.findAll()
-  const categories = JSON.parse(JSON.stringify(categoriesQuery)).map(category => ({
-    "id": category.id,
-    "category_name": category.name,
-    "state": category.state
-  }))
+  try {
+    const categoriesQuery = await Category.findAll()
+    const categories = JSON.parse(JSON.stringify(categoriesQuery)).map(category => ({
+      "id": category.id,
+      "category_name": category.category_name,
+      "state": category.state
+    }))
+  
+    // Create excel workbook, where sheets will be stored
+    const workbook = new ExcelJS.Workbook();
+  
+    // Create a sheet and assign to it some columns metadata to insert rows
+    const worksheet = workbook.addWorksheet("Lista de Categorias")
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 20 },
+      { header: "Nombre", key: "category_name", width: 25 },
+      { header: "Estado", key: "state", width: 30 },
+    ]
+  
+    // Style each column
+    const [ idColumn, nameColumn, stateColumn ] = [ worksheet.getColumn("id"), worksheet.getColumn("category_name"), worksheet.getColumn("state") ];
+    const alignment = { horizontal: "center" };
+    [ idColumn.alignment, nameColumn.alignment, stateColumn.alignment ] = [ alignment, alignment, alignment ];
+  
+    // Style header row
+    const headerRow = worksheet.getRow(1)
+    headerRow.font = { bold: true, size: 14 };
+  
+    // Add data of every category
+    for (const category of categories)
+      worksheet.addRow(category);
+  
+    // Auto-size columns to fit the content and headers
+    worksheet.columns.forEach((column) => {
+      column.header = column.header.toString(); // Convert header to string
+      column.width = Math.max(column.header.length, 12); // Set minimum width based on header length
 
-  // Create excel workbook, where sheets will be stored
-  const workbook = new ExcelJS.Workbook();
+      column.eachCell({ includeEmpty: true }, (cell) => {
+          cell.alignment = { 
+          vertical: "middle", 
+          horizontal: "center",
+          wrapText: true // Enable text wrapping
+      };
+      column.width = Math.max(column.width, cell.value ? cell.value.toString().length + 2 : 10); // Adjust width based on cell content
+      });
+  });
 
-  // Create a sheet and assign to it some columns metadata to insert rows
-  const worksheet = workbook.addWorksheet("Lista de Categorias")
-  worksheet.columns = [
-    { header: "ID", key: "id", width: 20 },
-    { header: "Nombre", key: "category_name", width: 25 },
-    { header: "Estado", key: "state", width: 30 },
-  ]
-
-  // Style each column
-  const [ idColumn, nameColumn, stateColumn ] = [ worksheet.getColumn("id"), worksheet.getColumn("name"), worksheet.getColumn("state") ];
-  const alignment = { horizontal: "center" };
-  [ idColumn.alignment, nameColumn.alignment, stateColumn.alignment ] = [ alignment, alignment, alignment ];
-
-  // Style header row
-  const headerRow = worksheet.getRow(1)
-  headerRow.font = { bold: true, size: 14 };
-
-  // Add data of every category
-  for (const category of categories)
-    worksheet.addRow(category)
-
-  const fileBuffer = await workbook.xlsx.writeBuffer();
-
-  res.setHeader('content-disposition', 'attachment; filename="Categorias.xlsx"');
-  res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
-  res.status(200).end(fileBuffer);
+    const fileBuffer = await workbook.xlsx.writeBuffer();
+  
+    res.setHeader('content-disposition', 'attachment; filename="Categorias.xlsx"');
+    res.setHeader('Access-Control-Expose-Headers', 'content-disposition');
+    res.status(200).end(fileBuffer);
+  } catch (error) {
+    res.status(400).send("Error al descargar");
+  }
 });
 
 router.get("/categoryByState/:categoryState", async (req, res) => {
@@ -110,6 +131,54 @@ router.post("/", async (req, res) => {
     res.json(category);
   } catch (error) {
     res.json( error );
+  }
+});
+
+router.post("/upload", upload.single("excel_file"), async (req, res) => {
+  const file = req.file
+
+  try {
+    // Create excel info getter
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(file.path)
+    const worksheet = workbook.getWorksheet(1);
+    
+    // Get every category from the excel
+    const categories = []
+    worksheet.eachRow(function(row, rowNumber) {
+      if (rowNumber === 1) return
+  
+      const [, id, category_name, state] = row.values
+  
+      categories.push({
+        id,
+        category_name: category_name,
+        state: state,
+      })
+    });
+  
+    // BUG: If validation is needed, it should go here
+  
+    // For every category, add it if ID not found, or update it if found
+    for (const category of categories) {
+      
+      if (category.id !== undefined) // Place indeed exists, update its info
+        await Category.update(category, {
+          where: { id: category.id },
+        });
+  
+      else // Place didn't exist, create a new one
+        await Category.create({ 
+          id: Date.now().toString(),
+          category_name: category.category_name, 
+          state: category.state,
+        });
+    }
+  
+    res.sendStatus(200);
+    
+  } catch (error) {
+    res.status(400).send("Error al actualizar desde el archivo");
   }
 });
 

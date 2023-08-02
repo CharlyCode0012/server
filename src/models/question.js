@@ -12,6 +12,7 @@ module.exports = (sequelize, type) =>{
 
         state:{
             type: type.BOOLEAN,
+            defaultValue: false,
         },
 
         id_client:{

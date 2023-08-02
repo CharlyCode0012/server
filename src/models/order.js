@@ -1,5 +1,5 @@
 module.exports = (sequelize, type) => {
-  return sequelize.define("order", {
+  const Order = sequelize.define("order", {
     id: {
       type: type.INTEGER,
       primaryKey: true,
@@ -11,9 +11,11 @@ module.exports = (sequelize, type) => {
     },
 
     date_order: {
-      type: type.DATEONLY,
+      type: type.DATE
     },
-
+    date_delivery: {
+      type: type.DATEONLY
+    },
     total: {
       type: type.DOUBLE,
     },
@@ -45,4 +47,9 @@ module.exports = (sequelize, type) => {
       referenceKey: "id",
     },
   });
+  Order.associate = (models) => {
+    Order.hasMany(models.OrderDetails, { foreignKey: 'id_order' });
+  };
+
+  return Order;
 };

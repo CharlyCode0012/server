@@ -1,13 +1,22 @@
 const express = require('express');
+const http = require('http');
 const bodyParser = require('body-parser');
 
 const apiRouter = require('./routes/api');
+const { io: menuIO } = require('./routes/api/menus');
+const {io: menuOptionsIO} = require('./routes/api/menu_options');
 const cors = require('cors');
 
 require('./db/db');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
+
+const {processPendingOrders, io: pendingOrdersIO} = require("./pendingOrdersProcessor");
+
+// Ejecutar la función processPendingOrders en segundo plano o en un proceso separado
+processPendingOrders();
 
 app.use(cors({origin: "*"}));
 app.use(bodyParser.json());
@@ -21,9 +30,14 @@ app.use((req, res, next) => {
 
 app.use('/api', apiRouter);
 
-app.listen(process.env.PORT, () => {    
+menuIO.attach(server);
+menuOptionsIO.attach(server);
+pendingOrdersIO.attach(server);
+
+server.listen(process.env.PORT, () => {    
 	console.log("=========================")
 	console.log("Listening on port: " + process.env.PORT);
 	console.log("Server is running! 😎")
 	console.log("=========================\n")
 });
+
