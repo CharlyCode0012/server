@@ -1,4 +1,4 @@
-INSERT INTO orderS (folio, date_order, total, amount, state, id_client, id_place, id_payment_method, createdAt, updatedAt)
+INSERT INTO orders (folio, date_order, total, amount, state, id_client, id_place, id_payment_method, createdAt, updatedAt)
 VALUES
 ('1238423A91', CURRENT_DATE(), 225.70, 0, 'NA', '3325248063', '1', '1', NOW(), NOW()),
 ('0038523E70', CURRENT_DATE(),189.00, 0, 'NA', '3325248063', '1', '2', NOW(), NOW()),
