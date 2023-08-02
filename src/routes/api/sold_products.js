@@ -59,37 +59,33 @@ async function getProductSales(timePeriod, order, options = null) {
     }
 
     // Consulta a la base de datos para obtener los productos vendidos
-    const result = await SoldProd.findAll({
-      attributes: [
-        "id_product",
-        [conn.fn("SUM", conn.col("quantity")), "total_sold"],
-        "date_purchase",
-        "id_category",
-        [Sequelize.col("product.product_name"), "product"],
-        [Sequelize.col("product.key_word"), "key_word"],
-      ],
-      where: optionsWhere,
-      include: [
-        {
-          model: Product,
-          attributes: [],
-        },
-        {
-          model: Category,
-          attributes: ["category_name"],
-          as: "category",
-        },
-      ],
-      group: [
-        "id_product",
-        "product.product_name",
-        "category.id",
-        "date_purchase",
-      ], // Include date_purchase in the group
-      having: optionsHaving,
-      order: [[conn.literal("total_sold"), order]],
-      raw: true,
-    });
+const result = await SoldProd.findAll({
+  attributes: [
+    'id_product',
+    [conn.fn('SUM', conn.col('quantity')), 'total_sold'],
+    'date_purchase',
+    'id_category',
+    [Sequelize.col('product.product_name'), 'product'],
+    [Sequelize.col('product.key_word'), 'key_word'],
+  ],
+  where: optionsWhere,
+  include: [
+    {
+      model: Product,
+      attributes: [],
+    },
+    {
+      model: Category,
+      attributes: ['category_name'],
+      as: 'category',
+    },
+  ],
+  group: ['id_product', 'product.product_name', 'category.id', 'date_purchase', 'id_category'], // Include id_category in the group
+  having: optionsHaving,
+  order: [[conn.literal('total_sold'), order]],
+  raw: true,
+});
+
 
     // Mapear los resultados y devolverlos
     const products = result.map((row) => ({
