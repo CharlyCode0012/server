@@ -104,7 +104,7 @@ router.get("/", async (req, res) => {
       };
     });
 
-    if (order === "ASC") {
+    if (order === "DESC") {
       options.sort((a, b) => b.option.localeCompare(a.option));
     } else {
       options.sort((a, b) => a.option.localeCompare(b.option));
@@ -174,7 +174,7 @@ router.get("/searchByKeyWord", async (req, res) => {
       };
     });
 
-    if (order === "ASC") {
+    if (order === "DESC") {
       options.sort((a, b) => b.option.localeCompare(a.option));
     } else {
       options.sort((a, b) => a.option.localeCompare(b.option));
@@ -346,7 +346,7 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
 
       menuOptions.push({
         id: id,
-        answer: answer,
+        answer: String(answer),
         option: option,
         keywords: keywords,
         action_type: action_type,

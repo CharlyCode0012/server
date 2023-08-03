@@ -429,7 +429,7 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
 
       products.push({
         id,
-        name: product_name,
+        product_name: product_name,
         description: description,
         key_word: key_word,
         price: price,
@@ -450,7 +450,7 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
       else
         await Product.create({
           id: Date.now().toString(),
-          name: product.name,
+          product_name: product.product_name,
           description: product.description,
           key_word: product.key_word,
           price: product.price,

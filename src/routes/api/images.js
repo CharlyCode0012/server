@@ -14,8 +14,8 @@ const PATH_IMG_PRODUCT = 'uploads/img/products';
 
 // Configuración de las credenciales de AWS
 const awsConfig = {
-  accessKeyId: "YOUR_ACCESS_KEY_ID",
-  secretAccessKey: "YOUR_SECRET_ACCESS_KEY",
+  accessKeyId: "AKIAWVXP2LLB2CGRD6P6",
+  secretAccessKey: "Cm8c8Ka5i+roIlY407YahtkTxhhqKR8hPh4uuDWg",
   region: "us-west-1", // Por ejemplo, "us-east-1"
 };
 
@@ -57,57 +57,42 @@ const upload = multer({
 
 // Función para descargar y guardar el archivo desde S3
 async function downloadFile(filename) {
+  const imageFile = filename + ".jpg"
   const s3Params = {
-    Bucket: "databot12",
-    Key: filename,
+    Bucket: "databot12", // Reemplaza con el nombre de tu bucket en S3
+    Key: imageFile,
   };
 
   try {
     // Verifica si el archivo existe en S3
     await s3Client.send(new HeadObjectCommand(s3Params));
-
+    const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, imageFile);
     // Si el archivo existe, descárgalo y guárdalo en la ruta especificada
-    const command = await s3Client.send(new GetObjectCommand(s3Params));
-    const fileContent = command.Body;
+    if(!fs.existsSync(imagePath)){
 
-    // Ruta donde deseas guardar el archivo
-    const filePath = path.join(__dirname, PATH_IMG_PRODUCT, filename);
+      const command = new GetObjectCommand(s3Params);
+      const result = await s3Client.send(command);
+      result.Body.pipe(fs.createWriteStream(imagePath));
+    }
 
-    fs.writeFile(filePath, fileContent, (err) => {
-      if (err) {
-        console.error("Error al guardar el archivo en el sistema de archivos:", err);
-        // Manejar el error en caso de que ocurra
-      } else {
-        console.log("Archivo descargado y guardado exitosamente.");
-      }
-    });
+  
   } catch (error) {
-      // Si el archivo no existe en S3, descarga la imagen por defecto desde S3 y guárdala
-      console.error("Error al descargar el archivo desde S3:", error);
-      const defaultImageName = "default.jpg"; // Nombre de la imagen por defecto en S3
-      const defaultImagePath = `uploads/imagenes/${defaultImageName}`;
-  
-      // Descarga la imagen por defecto desde S3 y guárdala en la ruta especificada
-      const s3DefaultParams = {
-        Bucket: "databot12",
-        Key: defaultImageName,
-      };
-  
-      try {
-        const defaultCommand = await s3Client.send(new GetObjectCommand(s3DefaultParams));
-        const defaultFileContent = defaultCommand.Body;
-  
-        fs.writeFile(defaultImagePath, defaultFileContent, (err) => {
-          if (err) {
-            console.error("Error al guardar la imagen por defecto en el sistema de archivos:", err);
-          } else {
-            console.log("Imagen por defecto descargada y guardada exitosamente.");
-          }
-        });
-      } catch (defaultError) {
-        console.error("Error al descargar la imagen por defecto desde S3:", defaultError);
-        // Manejar el error en caso de que ocurra
+    // Si el archivo no existe en S3, descarga la imagen por defecto desde S3 y guárdala
+    const defaultImageName = "default.jpg"; // Nombre de la imagen por defecto en S3
+
+    try {
+      const defaultPath = path.join(__dirname, PATH_IMG_PRODUCT, "default.jpg")
+      if(!fs.existsSync(defaultPath)){
+
+        const command = new GetObjectCommand({Bucket: "databot12", Key: defaultImageName});
+        const result = await s3Client.send(command);
+        result.Body.pipe(fs.createWriteStream(defaultPath));
       }
+
+    } catch (defaultError) {
+      console.error("Error al descargar la imagen por defecto desde S3:", defaultError);
+      // Manejar el error en caso de que ocurra
+    }
   }
 }
 
@@ -117,12 +102,12 @@ router.post("/", upload.single("image"), async (req, res) => {
   const fileContent = req.file.buffer;
   const extension = req.file.originalname.split(".").pop();
   const fileName = `${id_product}.${extension}`;
+  
   const s3Params = {
     Bucket: "databot12",
     Key: fileName,
     Body: fileContent,
     ContentType: req.file.mimetype,
-    ACL: "public-read", // Si deseas que las imágenes sean públicas y accesibles sin autenticación
   };
 
   try {
@@ -141,8 +126,8 @@ router.post("/", upload.single("image"), async (req, res) => {
 // Ruta para entregar imágenes desde el servidor local o descargarlas desde S3 si no existen localmente
 router.get("/:imageName", async (req, res) => {
   const { imageName } = req.params;
-  const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, imageName);
-
+  const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, `${imageName}.jpg`);
+  
   try {
     // Verificar si el archivo ya existe localmente en la ruta "uploads/img/products"
     if (fs.existsSync(imagePath)) {
@@ -151,7 +136,13 @@ router.get("/:imageName", async (req, res) => {
     } else {
       // Si el archivo no existe, descargarlo desde S3 y luego enviarlo como respuesta
       await downloadFile(imageName);
-      res.sendFile(imagePath);
+      if (fs.existsSync(imagePath)) {
+        res.sendFile(imagePath);
+      }
+      else{
+        const defaultPath = path.join(__dirname, PATH_IMG_PRODUCT, "default.jpg")
+        res.sendFile(defaultPath);
+      }
     }
   } catch (error) {
     console.error("Error al enviar el archivo al cliente:", error);

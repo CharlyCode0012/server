@@ -31,6 +31,7 @@ router.get("/download", async (req, res) => {
     const categories = JSON.parse(JSON.stringify(categoriesQuery)).map(category => ({
       "id": category.id,
       "category_name": category.category_name,
+      "description": category.description,
       "state": category.state
     }))
   
@@ -42,6 +43,7 @@ router.get("/download", async (req, res) => {
     worksheet.columns = [
       { header: "ID", key: "id", width: 20 },
       { header: "Nombre", key: "category_name", width: 25 },
+      {header: "Descripción", key: "description", width: 30},
       { header: "Estado", key: "state", width: 30 },
     ]
   
@@ -148,11 +150,12 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
     worksheet.eachRow(function(row, rowNumber) {
       if (rowNumber === 1) return
   
-      const [, id, category_name, state] = row.values
+      const [, id, category_name, description, state] = row.values
   
       categories.push({
         id,
         category_name: category_name,
+        description: description,
         state: state,
       })
     });
@@ -170,7 +173,8 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
       else // Place didn't exist, create a new one
         await Category.create({ 
           id: Date.now().toString(),
-          category_name: category.category_name, 
+          category_name: category.category_name,
+          description: category.description, 
           state: category.state,
         });
     }
