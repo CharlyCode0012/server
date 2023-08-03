@@ -6,7 +6,7 @@ module.exports = (sequelize, type) => {
       autoIncrement: false,
     },
 
-    title: {
+    name: {
       type: type.STRING(50),
     },
 
