@@ -3,155 +3,70 @@ const router = express.Router();
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
-const {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  HeadObjectCommand
-} = require("@aws-sdk/client-s3");
+require("dotenv").config();
 
-const PATH_IMG_PRODUCT = 'uploads/img/products';
-
-// Configuración de las credenciales de AWS
-const awsConfig = {
-  accessKeyId: "AKIAWVXP2LLB2CGRD6P6",
-  secretAccessKey: "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",
-  region: "us-west-1", // Por ejemplo, "us-east-1"
-};
+const { S3Client, CreatePresignedPost, GetObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
-  region: awsConfig.region,
+  region: process.env.AWS_REGION,
   credentials: {
-    accessKeyId: awsConfig.accessKeyId,
-    secretAccessKey: awsConfig.secretAccessKey,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'src/routes/api/uploads/img/products');
-  },
-  filename: (req, file, cb) => {
-    const fileName = file.originalname;
-    const lastDotIndex = fileName.lastIndexOf('.');
-    const extension = fileName.slice(lastDotIndex + 1);
-    const id = req.query.id_product ?? Date.now();
-    const name = `${id}.${extension}`;
-
-    cb(null, name);
-  }
-});
-
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Formato de imagen no válido. Se permiten archivos JPEG y PNG.'));
-    }
-  }
-});
-
-// Función para descargar y guardar el archivo desde S3
-async function downloadFile(filename) {
-  const imageFile = filename + ".jpg"
-  const s3Params = {
-    Bucket: "databot12", // Reemplaza con el nombre de tu bucket en S3
-    Key: imageFile,
+async function getPresignedUrl(key) {
+  const params = {
+    Bucket: "databot12",
+    Fields: {
+      key,
+    },
+    Conditions: [
+      ["content-length-range", 0, 1000000], // limitar tamaño de archivo, e.g., 1MB
+      ["starts-with", "$Content-Type", "image/"], // limitar a imágenes
+    ],
   };
 
   try {
-    // Verifica si el archivo existe en S3
-    await s3Client.send(new HeadObjectCommand(s3Params));
-    const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, imageFile);
-    // Si el archivo existe, descárgalo y guárdalo en la ruta especificada
-    if(!fs.existsSync(imagePath)){
-
-      const command = new GetObjectCommand(s3Params);
-      const result = await s3Client.send(command);
-      result.Body.pipe(fs.createWriteStream(imagePath));
-    }
-
-  
+    const data = await CreatePresignedPost(s3Client, params);
+    return data;
   } catch (error) {
-    // Si el archivo no existe en S3, descarga la imagen por defecto desde S3 y guárdala
-    const defaultImageName = "default.jpg"; // Nombre de la imagen por defecto en S3
-
-    try {
-      const defaultPath = path.join(__dirname, PATH_IMG_PRODUCT, "default.jpg")
-      if(!fs.existsSync(defaultPath)){
-
-        const command = new GetObjectCommand({Bucket: "databot12", Key: defaultImageName});
-        const result = await s3Client.send(command);
-        result.Body.pipe(fs.createWriteStream(defaultPath));
-      }
-
-    } catch (defaultError) {
-      console.error("Error al descargar la imagen por defecto desde S3:", defaultError);
-      // Manejar el error en caso de que ocurra
-    }
+    throw new Error(`Error al crear la URL prefirmada: ${error}`);
   }
 }
 
-// Ruta para cargar imágenes en Amazon S3
-router.post("/", upload.single("image"), async (req, res) => {
-  const { id_product } = req.query;
-  const fileContent = req.file.buffer;
-  const extension = req.file.originalname.split(".").pop();
-  const fileName = `${id_product}.${extension}`;
-  
-  const s3Params = {
-    Bucket: "databot12",
-    Key: fileName,
-    Body: fileContent,
-    ContentType: req.file.mimetype,
-  };
-
+router.get("/presigned-url", async (req, res) => {
+  const { fileName } = req.query;
   try {
-    // Cargar el archivo en S3
-    await s3Client.send(new PutObjectCommand(s3Params));
-
-    // Construir la URL pública de la imagen subida
-   
-    res.json({ image_url: id_product });
+    const url = await getPresignedUrl(fileName);
+    res.json(url);
   } catch (error) {
-    console.error("Error al cargar la imagen a S3:", error);
-    res.status(500).json({ error: "Error al cargar la imagen a S3" });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Ruta para entregar imágenes desde el servidor local o descargarlas desde S3 si no existen localmente
-router.get("/:imageName", async (req, res) => {
-  const { imageName } = req.params;
-  const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, `${imageName}.jpg`);
-  
-  try {
-    // Verificar si el archivo ya existe localmente en la ruta "uploads/img/products"
-    if (fs.existsSync(imagePath)) {
-      // Si el archivo existe, enviarlo como respuesta
-      res.sendFile(imagePath);
-    } else {
-      // Si el archivo no existe, descargarlo desde S3 y luego enviarlo como respuesta
-      await downloadFile(imageName);
-      if (fs.existsSync(imagePath)) {
-        res.sendFile(imagePath);
-      }
-      else{
-        const defaultPath = path.join(__dirname, PATH_IMG_PRODUCT, "default.jpg")
-        res.sendFile(defaultPath);
-      }
-    }
-  } catch (error) {
-    console.error("Error al enviar el archivo al cliente:", error);
-    res.status(400).send("Error");
-  }
-});
+async function getPresignedDownloadUrl(bucketName, key) {
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
 
-router.get("/", (req, res) => {
-  res.json({ img: "send image" });
+  try {
+    const url = await s3Client.getSignedUrl(command, { expiresIn: 3600 }); // 1 hora de validez
+    return url;
+  } catch (error) {
+    throw new Error(`Error al crear la URL prefirmada para la descarga: ${error}`);
+  }
+}
+
+router.get("/download", async (req, res) => {
+  const { fileName } = req.query;
+  try {
+    const url = await getPresignedDownloadUrl("databot12", fileName);
+    res.json({ url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;
