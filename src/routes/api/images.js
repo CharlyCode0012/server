@@ -7,12 +7,11 @@ const {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-  HeadObjectCommand
+  HeadObjectCommand,
 } = require("@aws-sdk/client-s3");
-const { PassThrough } = require('stream'); // Asegúrate de incluir el módulo stream
+const { PassThrough } = require("stream"); // Asegúrate de incluir el módulo stream
 
-
-const PATH_IMG_PRODUCT = 'uploads/img/products';
+const PATH_IMG_PRODUCT = "uploads/img/products";
 
 // Configuración de las credenciales de AWS
 const awsConfig = {
@@ -31,35 +30,39 @@ const s3Client = new S3Client({
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'src/routes/api/uploads/img/products');
+    cb(null, "src/routes/api/uploads/img/products");
   },
   filename: (req, file, cb) => {
     const fileName = file.originalname;
-    const lastDotIndex = fileName.lastIndexOf('.');
+    const lastDotIndex = fileName.lastIndexOf(".");
     const extension = fileName.slice(lastDotIndex + 1);
     const id = req.query.id_product ?? Date.now();
     const name = `${id}.${extension}`;
 
     cb(null, name);
-  }
+  },
 });
 
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
 
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Formato de imagen no válido. Se permiten archivos JPEG y PNG.'));
+      cb(
+        new Error(
+          "Formato de imagen no válido. Se permiten archivos JPEG y PNG."
+        )
+      );
     }
-  }
+  },
 });
 
 // Función para descargar y guardar el archivo desde S3
 async function downloadFileAsStream(filename) {
-  const imageFile = filename + ".jpg"
+  const imageFile = filename + ".jpg";
   const s3Params = {
     Bucket: "databot12", // Reemplaza con el nombre de tu bucket en S3
     Key: imageFile,
@@ -83,7 +86,10 @@ async function downloadFileAsStream(filename) {
     const defaultImageName = "default.jpg"; // Nombre de la imagen por defecto en S3
 
     try {
-      const command = new GetObjectCommand({Bucket: "databot12", Key: defaultImageName});
+      const command = new GetObjectCommand({
+        Bucket: "databot12",
+        Key: defaultImageName,
+      });
       const result = await s3Client.send(command);
 
       const pass = new PassThrough();
@@ -91,7 +97,10 @@ async function downloadFileAsStream(filename) {
 
       return pass; // Devuelve el flujo de datos que contiene la imagen por defecto
     } catch (defaultError) {
-      console.error("Error al descargar la imagen por defecto desde S3:", defaultError);
+      console.error(
+        "Error al descargar la imagen por defecto desde S3:",
+        defaultError
+      );
       throw defaultError;
     }
   }
@@ -103,7 +112,7 @@ router.post("/", upload.single("image"), async (req, res) => {
   const fileContent = req.file.buffer;
   const extension = req.file.originalname.split(".").pop();
   const fileName = `${id_product}.${extension}`;
-  
+
   const s3Params = {
     Bucket: "databot12",
     Key: fileName,
@@ -116,7 +125,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     await s3Client.send(new PutObjectCommand(s3Params));
 
     // Construir la URL pública de la imagen subida
-   
+
     res.json({ image_url: id_product });
   } catch (error) {
     console.error("Error al cargar la imagen a S3:", error);
@@ -127,24 +136,17 @@ router.post("/", upload.single("image"), async (req, res) => {
 // Ruta para entregar imágenes desde el servidor local o descargarlas desde S3 si no existen localmente
 router.get("/:imageName", async (req, res) => {
   const { imageName } = req.params;
-  const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, `${imageName}.jpg`);
-  
+
   try {
-    // Verificar si el archivo ya existe localmente en la ruta "uploads/img/products"
-    if (fs.existsSync(imagePath)) {
-      // Si el archivo existe, enviarlo como respuesta
-      res.sendFile(imagePath);
-    } else {
-      // Si el archivo no existe, descargarlo desde S3 y luego enviarlo como respuesta
-      const imageStream = await downloadFileAsStream(imageName);
+    // Si el archivo no existe, descargarlo desde S3 y luego enviarlo como respuesta
+    const imageStream = await downloadFileAsStream(imageName);
 
-      // Configurar los encabezados de la respuesta
-      res.set('Content-Type', 'image/jpeg');
-      res.set('Content-Disposition', `attachment; filename="${imageName}.jpg"`);
+    // Configurar los encabezados de la respuesta
+    res.set("Content-Type", "image/jpeg");
+    res.set("Content-Disposition", `attachment; filename="${imageName}.jpg"`);
 
-      // Enviar el flujo del archivo como respuesta
-      imageStream.pipe(res);
-    }
+    // Enviar el flujo del archivo como respuesta
+    imageStream.pipe(res);
   } catch (error) {
     console.error("Error al enviar el archivo al cliente:", error);
     res.status(400).send("Error");
