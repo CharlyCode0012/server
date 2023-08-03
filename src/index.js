@@ -18,7 +18,12 @@ const {processPendingOrders, io: pendingOrdersIO} = require("./pendingOrdersProc
 // Ejecutar la función processPendingOrders en segundo plano o en un proceso separado
 processPendingOrders();
 
-app.use(cors({origin: "*"}));
+app.use(cors({
+  origin: '*', // Cambia esto al dominio que estás usando
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204,
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
