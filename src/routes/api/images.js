@@ -62,9 +62,11 @@ async function getPresignedDownloadUrl(bucketName, key) {
 router.get("/download", async (req, res) => {
   const { fileName } = req.query;
   try {
+    console.log(`Descargando archivo: ${fileName}`); // Registro de diagnóstico
     const url = await getPresignedDownloadUrl("databot12", fileName);
     res.json({ url });
   } catch (error) {
+    console.error(`Error al descargar archivo: ${error.message}`); // Registro de error
     res.status(500).json({ error: error.message });
   }
 });
