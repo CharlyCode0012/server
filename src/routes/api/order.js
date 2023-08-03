@@ -50,6 +50,7 @@ router.get("/searchByState", async (req, res) => {
       replacements: { search: search },
       type: QueryTypes.SELECT,
     });
+    console.log(orders);
     res.json(orders);
   } catch (error) {
     res.status(400).send(error);

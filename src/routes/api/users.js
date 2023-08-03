@@ -159,10 +159,11 @@ router.put("/updateProfile", async (req, res) => {
     
       // Check if cellphone repeats
       const cel = req.body.cel;
-      const cellphoneAlreadyTaken = (await User.findAll({ where: { cel: cel } })).length > 0;
+      const cellphoneAlreadyTaken = await User.findAll({ where: { cel: cel } });
     
-      if (cellphoneAlreadyTaken) 
+      if (cellphoneAlreadyTaken && cellphoneAlreadyTaken.some(user => user.id !== userId)) {
         return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
+      }
     
       // Everything OK, update user
       await User.update({
@@ -176,6 +177,7 @@ router.put("/updateProfile", async (req, res) => {
       //console.log(JSON.stringify(user));
       res.json(user);
     } catch (error) {
+      console.log(error);
       res.status(400).send("Error");
     }
 })
@@ -183,8 +185,8 @@ router.put("/updateProfile", async (req, res) => {
 /**
  * Updates a user in the DB
  */
-router.put("/:userId", async (req, res) => {
-  const { userId } = req.params;
+router.put("/", async (req, res) => {
+  const { userId } = req.query;
   try {
     // Check if user exists
     const isFind = await User.findOne({ where: { id: userId } });
@@ -193,10 +195,11 @@ router.put("/:userId", async (req, res) => {
   
     // Check if cellphone repeats
     const cel = req.body.cel;
-    const cellphoneAlreadyTaken = await User.findOne({ where: { cel: cel } });
+    const cellphoneAlreadyTaken = await User.findAll({ where: { cel: cel } });
   
-    if (cellphoneAlreadyTaken && cellphoneAlreadyTaken.id !== userId) 
+    if (cellphoneAlreadyTaken && cellphoneAlreadyTaken.some(user => user.id !== userId)) {
       return res.status(409).json({ error: "Ya hay un usuario con ese numero" });
+    }
   
     // Everything OK, update user
     await User.update(req.body, {
@@ -204,6 +207,7 @@ router.put("/:userId", async (req, res) => {
     });
     res.json({ success: `se ha modificado ${userId}` });
   } catch (error) {
+    console.log(error);
     res.status(400).send("Error");
   }
 });

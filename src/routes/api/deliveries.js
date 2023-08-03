@@ -264,16 +264,10 @@ router.get("/searchByFolio", async (req, res) => {
       };
     });
 
-    /* const filteredDeliveries = arrayDeliveries.filter((delivery, index, self) => {
-            // Filtrar el primer elemento con el mismo folio encontrado
-            return (
-                self.findIndex((d) => d.folio === delivery.folio && d.id !== null) === index
-            );
-        }); */
 
     res.json(arrayDeliveries);
   } catch (error) {
-    res.send(error);
+    res.status(400).send({error: true, textError: "Hubo un error en la consulta"});
   }
 });
 
