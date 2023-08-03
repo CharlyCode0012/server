@@ -138,15 +138,24 @@ router.get("/:imageName", async (req, res) => {
   const { imageName } = req.params;
 
   try {
-    // Si el archivo no existe, descargarlo desde S3 y luego enviarlo como respuesta
-    const imageStream = await downloadFileAsStream(imageName);
+    // Verificar si el archivo existe localmente en la ruta "uploads/img/products"
+    const imagePath = path.join(__dirname, PATH_IMG_PRODUCT, `${imageName}.jpg`);
+    if (fs.existsSync(imagePath)) {
+      // Si el archivo existe localmente, enviarlo como respuesta
+      res.set("Content-Type", "image/jpeg");
+      res.set("Content-Disposition", `attachment; filename="${imageName}.jpg"`);
+      fs.createReadStream(imagePath).pipe(res);
+    } else {
+      // Si el archivo no existe localmente, descargarlo desde S3 y luego enviarlo como respuesta
+      const imageStream = await downloadFileAsStream(imageName);
 
-    // Configurar los encabezados de la respuesta
-    res.set("Content-Type", "image/jpeg");
-    res.set("Content-Disposition", `attachment; filename="${imageName}.jpg"`);
+      // Configurar los encabezados de la respuesta
+      res.set("Content-Type", "image/jpeg");
+      res.set("Content-Disposition", `attachment; filename="${imageName}.jpg"`);
 
-    // Enviar el flujo del archivo como respuesta
-    imageStream.pipe(res);
+      // Enviar el flujo del archivo como respuesta
+      imageStream.pipe(res);
+    }
   } catch (error) {
     console.error("Error al enviar el archivo al cliente:", error);
     res.status(400).send("Error");
