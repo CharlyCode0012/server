@@ -28,37 +28,7 @@ const s3Client = new S3Client({
   },
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "src/routes/api/uploads/img/products");
-  },
-  filename: (req, file, cb) => {
-    const fileName = file.originalname;
-    const lastDotIndex = fileName.lastIndexOf(".");
-    const extension = fileName.slice(lastDotIndex + 1);
-    const id = req.query.id_product ?? Date.now();
-    const name = `${id}.${extension}`;
-
-    cb(null, name);
-  },
-});
-
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
-
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Formato de imagen no válido. Se permiten archivos JPEG y PNG."
-        )
-      );
-    }
-  },
-});
+const upload = multer();
 
 // Función para descargar y guardar el archivo desde S3
 async function downloadFileAsStream(filename) {
@@ -125,8 +95,9 @@ router.post("/", upload.single("image"), async (req, res) => {
     await s3Client.send(new PutObjectCommand(s3Params));
 
     // Construir la URL pública de la imagen subida
+    const imageUrl = `https://BUCKET_NAME.s3.${awsConfig.region}.amazonaws.com/${fileName}`;
 
-    res.json({ image_url: id_product });
+    res.json({ image_url: imageUrl });
   } catch (error) {
     console.error("Error al cargar la imagen a S3:", error);
     res.status(500).json({ error: "Error al cargar la imagen a S3" });
