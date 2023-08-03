@@ -52,7 +52,7 @@ router.get("/", async (req, res) => {
   const { order } = req.query;
   try {
     const menus = await Menu.findAll({
-      order: [["principalMenu", "DESC"], ["name", order === "ASC" ? "ASC" : "DESC"]],
+      order: [["principalMenu", "DESC"], ["title", order === "ASC" ? "ASC" : "DESC"]],
     });
     res.json(menus);
   } catch (error) {
@@ -114,7 +114,7 @@ router.get("/download", async (req, res) => {
     const worksheet = workbook.addWorksheet("Menus");
     worksheet.columns = [
       { header: "ID", key: "id", width: 20 },
-      { header: "Título", key: "name", width: 25 },
+      { header: "Título", key: "title", width: 25 },
       { header: "Respuesta", key: "answer", width: 25 },
     ];
 
@@ -205,11 +205,11 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
     worksheet.eachRow(function (row, rowNumber) {
       if (rowNumber === 1) return;
 
-      const [, id, name, answer] = row.values;
+      const [, id, title, answer] = row.values;
 
       menus.push({
         id,
-        name: name,
+        title: title,
         answer: answer,
       });
     });
@@ -225,7 +225,7 @@ router.post("/upload", upload.single("excel_file"), async (req, res) => {
       else
         await Menu.create({
           id: Date.now().toString(),
-          name: menu.name,
+          title: menu.title,
           answer: menu.answer,
           principalMenu: 0,
         });
