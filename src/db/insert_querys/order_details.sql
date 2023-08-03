@@ -15,3 +15,9 @@ VALUES
 (1, 499.99, 499.99, 9, '308', NOW(), NOW()),
 (1, 349.99, 349.99, 4, '306', NOW(), NOW());
 
+INSERT INTO order_details (quantity, price, total_price, id_order, id_product, createdAt, updatedAt)
+VALUES
+(1, 499.99, 499.99, 14, '308', NOW(), NOW()),
+(1, 499.99, 499.99, 15, '308', NOW(), NOW()),
+(1, 499.99, 499.99, 16, '308', NOW(), NOW()),
+(1, 499.99, 499.99, 17, '308', NOW(), NOW());

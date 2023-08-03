@@ -65,8 +65,8 @@ const processPendingOrders = async () => {
     console.error("Error al procesar los pedidos pendientes:", error);
   }
 };
-
-setInterval(processPendingOrders, 24 * 60 * 60 * 1000); // Ejecutar cada 24 horas
+//setInterval(processPendingOrders, 24 * 60 * 60 * 1000); // Ejecutar cada hora
+setInterval(processPendingOrders, 1 * 60 * 60 * 1000); // Ejecutar cada hora
 //setInterval(processPendingOrders, 2 * 60 * 1000); // se ejecuta cada 2 min
 
 io.on("connection", (socket) => {
