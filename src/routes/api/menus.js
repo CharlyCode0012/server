@@ -2,7 +2,7 @@ const socketIO = require("socket.io");
 const router = require("express").Router();
 const { Op } = require("sequelize");
 
-const { Menu, MenuOptions } = require("../../db/db");
+const { Menu, MenuOptions, MenuAndOptions } = require("../../db/db");
 const ExcelJS = require("exceljs");
 const upload = require("../../config.js");
 const io = socketIO();
@@ -276,6 +276,7 @@ router.delete("/:menuId", async (req, res) => {
     const Options = await MenuOptions.findAll({ where: { reference: menuId } });
 
     for (let option of Options) {
+      await MenuAndOptions.destroy({where: {menuOptionsID: option.id}});
       await MenuOptions.destroy({ where: { id: option.id } });
     }
 

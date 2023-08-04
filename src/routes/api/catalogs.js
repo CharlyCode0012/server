@@ -3,7 +3,7 @@ const router = require("express").Router();
 const upload = require("../../config.js");
 const ExcelJS = require("exceljs");
 
-const { Catalog, MenuOptions } = require("../../db/db");
+const { Catalog, MenuOptions, MenuAndOptions } = require("../../db/db");
 const { Op } = require("sequelize");
 
 router.get("/", async (req, res) => {
@@ -220,6 +220,7 @@ router.delete("/:catalogId", async (req, res) => {
     });
 
     for (let option of Options) {
+      await MenuAndOptions.destroy({where: {menuOptionsID: option.id}});
       await MenuOptions.destroy({ where: { id: option.id } });
     }
 
