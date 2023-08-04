@@ -2,7 +2,7 @@ const socketIO = require("socket.io");
 const router = require("express").Router();
 const { Op } = require("sequelize");
 
-const { Menu } = require("../../db/db");
+const { Menu, MenuOptions } = require("../../db/db");
 const ExcelJS = require("exceljs");
 const upload = require("../../config.js");
 const io = socketIO();
@@ -52,7 +52,10 @@ router.get("/", async (req, res) => {
   const { order } = req.query;
   try {
     const menus = await Menu.findAll({
-      order: [["principalMenu", "DESC"], ["name", order === "ASC" ? "ASC" : "DESC"]],
+      order: [
+        ["principalMenu", "DESC"],
+        ["name", order === "ASC" ? "ASC" : "DESC"],
+      ],
     });
     res.json(menus);
   } catch (error) {
@@ -269,6 +272,12 @@ router.delete("/:menuId", async (req, res) => {
     const isFind = await Menu.findOne({ where: { id: menuId } });
 
     if (!isFind) return res.status(404).send("Pregunta no encontrada");
+
+    const Options = await MenuOptions.findAll({ where: { reference: menuId } });
+
+    for (let option of Options) {
+      await MenuOptions.destroy({ where: { id: option.id } });
+    }
 
     await Menu.destroy({ where: { id: menuId } });
 
