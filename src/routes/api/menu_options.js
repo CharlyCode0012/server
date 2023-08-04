@@ -17,10 +17,10 @@ const handleMenuUpdated = () => {
 // Inicializar el WebSocket
 io.on("connection", (socket) => {
   console.log("Cliente conectado al socket");
-});
 
-// Escuchar evento 'menu_updated' desde el cliente
-io.on("menu_updated", handleMenuUpdated);
+  // Escuchar evento 'menu_updated' desde el cliente
+  socket.on("menu_updated", handleMenuUpdated);
+});
 
 // Agregar el middleware de Socket.IO
 router.use((req, res, next) => {
@@ -33,11 +33,11 @@ router.use((req, res, next) => {
       req.path === `/${req.query?.menuResId}` ||
       req.path === "/upload"); // Rutas que modifican la base de datos
 
-      if (shouldUseSocket) {
-        req.isSocketRequest = true;
-      } else {
-        req.isSocketRequest = false; // Aquí es donde lo estás definiendo
-      }
+  if (shouldUseSocket) {
+    req.isSocketRequest = true;
+  } else {
+    req.isSocketRequest = false;
+  }
 
   console.log(
     "shouldUseSocket: ",
