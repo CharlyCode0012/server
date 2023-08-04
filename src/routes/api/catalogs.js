@@ -207,8 +207,8 @@ router.put("/:catalogId", async (req, res) => {
   }
 });
 
-router.delete("/:catalogId", async (req, res) => {
-  const { catalogId } = req.params;
+router.delete("/", async (req, res) => {
+  const { catalogId } = req.query;
 
   try {
     const isFind = await Catalog.findOne({ where: { id: catalogId } });

@@ -267,8 +267,8 @@ router.put("/", async (req, res) => {
   }
 });
 
-router.delete("/:menuId", async (req, res) => {
-  const { menuId } = req.params;
+router.delete("/", async (req, res) => {
+  const { menuId } = req.query;
   try {
     const isFind = await Menu.findOne({ where: { id: menuId } });
 

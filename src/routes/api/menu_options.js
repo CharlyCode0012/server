@@ -454,18 +454,18 @@ router.put("/", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
+router.delete("/", async (req, res) => {
+  const { menuResId } = req.query;
 
   try {
     // Verificar si el registro existe
-    const menuOption = await MenuOptions.findByPk(id);
+    const menuOption = await MenuOptions.findByPk(menuResId);
     if (!menuOption) {
       return res.status(404).json({ message: "Registro no encontrado" });
     }
 
     // Eliminar la asociación con MenuAndOptions
-    await MenuAndOptions.destroy({ where: { menuOptionsID: id } });
+    await MenuAndOptions.destroy({ where: { menuOptionsID: menuResId } });
 
     // Eliminar el registro de MenuOptions
     await menuOption.destroy();
