@@ -20,9 +20,7 @@ processPendingOrders();
 
 app.use(cors({
   origin: '*', // Cambia esto al dominio que estás usando
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
-  optionsSuccessStatus: 204,
+
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -37,7 +35,7 @@ app.use('/api', apiRouter);
 
 menuIO.attach(server);
 menuOptionsIO.attach(server);
-pendingOrdersIO.attach(server);
+//pendingOrdersIO.attach(server);
 
 server.listen(process.env.PORT, () => {    
 	console.log("=========================")
