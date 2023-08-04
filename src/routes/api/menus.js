@@ -33,10 +33,11 @@ router.use((req, res, next) => {
       req.path === `/${req.query?.menuId}` ||
       req.path === "/upload"); // Rutas que modifican la base de datos
 
-  if (shouldUseSocket) {
-    // Establecer una conexión de Socket.IO para esta solicitud
-    req.isSocketRequest = true;
-  }
+      if (shouldUseSocket) {
+        req.isSocketRequest = true;
+      } else {
+        req.isSocketRequest = false; // Aquí es donde lo estás definiendo
+      }
 
   console.log(
     "shouldUseSocket: ",
